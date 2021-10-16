@@ -1,0 +1,100 @@
+MNcwi - An SQLite implementation of the Minnesota County Well Index database. 
+
+Date:   	2021-10-02
+Author: 	William C. Olsen   
+
+The cwischema files define SQLite versions of the cwi database.  Different versions are defined both to facilitate development steps, and to serve the needs of different users.
+
+The version numbering system remains tentative.  
+Originally, all versions are identified as c4.[S].[V]  where S distinguishes different features added to the schema, and V is the current version of schema S. 
+
+The version number and version schema are named in MNcwi_config.py as globals:
+	MNcwi_DB_VERSION   
+	MNcwi_DB_SCHEMA
+
+Outline of versions:
+
+c4.0.0	Versions that include only the main data tables exactly as served.
+	Columns exactly match the csv files served on fullset/cwidata_csv.zip on the MGS ftp site, as of 2021-10-02.  There is no table with well coordinates.
+
+c4.1.0  Table c4locs is added.
+
+c4.2.0	Columns rowid and wellid are added explicitly to each table (as columns 1 & 2).
+	In table c4ix, the position of the wellid column is moved to column 2.
+
+c4.3.0  Foreign key constraints (wellid) are added to the data tables  
+	The raw data cloned from cwi may not pass all integrity checks.
+
+c4.4.0  Table c4id is modified to include all wellids and all Well Unique Numbers.
+	Boolean fields 'is_MNU' and 'is_pMNU' are added to c4id. (integers = 0/1/Null).
+	See notes below on 'Modified Identifier Table'.
+
+Notes on the data tables
+
+	The data tables are described on the MWI website.
+		http://mgsweb2.mngs.umn.edu/cwi_doc/cwiDataTables.htm
+
+	The standard c4 tables included in cwidata_csv.zip are:
+		c4ad
+		c4c1
+		c4c2
+		c4id
+		c4ix
+		c4pl
+		c4rm
+		c4st
+		c4wl
+
+Notes on table c4locs
+
+	Well coordinates are published on the ftp site only in 2 shape files, named wells.shp (located wells) and unloc_wells.shp (unlocated wells).  In the Sqlite database, well locations are held in a single new table named 
+		c4locs.  
+	It is a clone of the attribute tables from the shape files and includes records from both shape files. It includes columns for the UTM coordinates.  
+	
+	Records from the 2 shape files are distinguished by entering 'loc' or 'unloc' in a newly defined column named 'CWI_loc'.
+
+Notes on the code tables
+
+	The code tables are described on the MWI website.
+		http://mgsweb2.mngs.umn.edu/cwi_doc/cwiCodeTables.htm
+	As of Oct 13, 2021, the code tables are not yet served from the MGS ftp site as csv tables, and they have not been added to the sqlite database or the schemas.	
+		
+
+Notes on rowid column
+
+	The column 'rowid' is explicitly defined to be an alias for the internally defined 'rowid' column that SQLite creates for every table (in general). The reason to explicitly define it to make it more easily accessible in the SQLiteStudio interface.  Documentation is here:
+		https://www.sqlite.org/rowidtable.html
+		https://www.sqlite.org/lang_createtable.html
+			5. ROWIDs and the INTEGER PRIMARY KEY
+
+
+Notes on wellid column
+
+	The wellid column is not defined in version c4, but is defined in later versions as the relational identifier.  It is an integer column with values set equivalent to the value in the RELATEID column in table c4ix.  
+	
+	The wellid column is added to every table in version c4.2.0, and indexed.  
+	
+	Data table relationships are defined in version c4.3.0 using the wellid as a Foreign Key referenced to table c4ix.  
+	
+	In version c4.4.0 table c4id takes primacy for well identifiers, and new constraints are placed on both identifiers and wellid's.  Data as served from CWI may not pass all constraints of this model.
+	
+Notes on Modified Identifier Table (version c4.4.0)
+
+	The meaning of table c4id is changed from 'Alternate identifiers table' to simply 'Identifiers table'.  All Unique Well Numbers in table c4ix are appended to c4id, and c4id should be the only table searched for Unique Well Numbers when a reliable search is required.
+	
+	An integer boolean column 'is_MNU' is added to c4id to identify well identifiers that are effectively unique across Minnesota; they are classified as 'is_MNU = 1'. That includes 'H-numbers', the older 'W-numbers' (with county code prefixes), and redundant Unique Well Numbers that are currently identified in c4id as ID_PROG in ('MNUNIQ', 'WMWSR', 'WSERIES').
+	
+	For each wellid, the lowest alpha-numeric sorting MNU identifier is flagged by setting 'is_pMNU = 1'.  All other identifiers are flagged as 'is_pMNU = 0' or 'is_pMNU = NULL'
+	
+	A conditional unique index is created on the c4id table using the is_MNU flag to enforce that each MNU identifier is unique.  These identifiers are then reliable for identifying wells outside of the context of the CWI database, for example for use as archival identifiers in paper or electronic files.  A VIEW, c4idu, is created of c4id that exposes only is_MNU=1 identifiers.  When searching for wells in this database by Unique Well Number, it is advised to search the identifiers values in this table.  Such a search is guaranteed to find any identifier that is or was a Minnesota Unique Well number.  Such a search may return multiple instances for an individual wellid, in the event that the search includes multiple identifiers assigned to the same well.
+	
+	A conditional unique index is created on the c4id table using the is_pMNU flag to enforce that each wellid has only one identifier flagged as is_pMNU.  A VIEW, c4idp, is created of c4id that exposes only is_pMNU=1 identifiers.  When exporting data from CWI, it is advised to join the data with this view and to identify each well using the identifier exposed in this view.
+
+
+References:
+
+	County Well Index, 2021, Database created and maintained by the Minnesota Geological Survey, a department of the University of Minnesota,  with the assistance of the Minnesota Department of Health.
+
+	http://mgsweb2.mngs.umn.edu/cwi_doc/cwidoc.htm
+
+	https://www.sqlite.org

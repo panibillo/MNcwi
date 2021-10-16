@@ -1,0 +1,9 @@
+**.pyc
+**.bak
+**.zip
+**.csv
+**.mdb
+**.sqlite
+src/MNcwi_logins.py
+.project
+.pydevproject
