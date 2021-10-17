@@ -74,6 +74,27 @@ def csv_generator(csvname, col_names, colfunc):
         reader = csv.DictReader(datafile)
         for line in reader:
             yield tuple(colfunc[col](line[col]) for col in col_names)
+
+def csv_wellid_generator(csvname, col_names, colfunc):
+    """ 
+    Yield next line from csv file as a tuple of type converted values
+    
+    Arguments:
+    csvname   : Filename of an existing csv file to be read.
+    col_names : Column names as entered in csv header (may be subset or reordered)
+    col_func  : Dictionary of type conversion functions 
+    
+    Notes:
+    -   The yielded values are ordered as in col_names.
+    -   The yielded values are type converted using functions in colfunc.
+    -   Both col_names and the keys used in col_func must match csv header  
+        entries exactly, including case.
+    """
+    with open(csvname, 'r') as datafile:
+        reader = csv.DictReader(datafile)
+        for line in reader:
+            wellid = int(line['RELATEID'])
+            yield tuple([wellid]+[colfunc[col](line[col]) for col in col_names])
          
 def shp_locs_generator(shpname):
     """
@@ -181,37 +202,25 @@ class cwi_csvupdate():
         db.commit_db()
         db.vacuum()
                  
-    def import_data_from_csv(self, db, c4version):    
+    def import_data_from_csv(self, db, schema_has_constraints):    
         """ 
         Create c4 tables in an sqlite db, and read in data from csv files
  
+        Notes
+        ----- 
         Assumes that the csv files have already been downloaded and extracted.
             fullset/cwidata_csv.zip
         This version deletes existing tables if present! It does not update.
         Some details and steps will depend on the c4version selected, described
            below.
-        Table definitions are 
          
-        c4version, c4create_sql
-        'c4.0.0', 'cwischema_c4.0.0.sql'
-            Versions that include only the main data tables.
-            sqlite columns exactly match the csv files as of 2021-02-10.
-            The relational identifier is RELATEID
-         
-        'c4.1.0', 'cwischema_c4.1.0.sql'
-            Rowid and wellid are added explicitly to each table.
-            In table c4ix, the position of the wellid column is moved to col 2.
-         
-        'c4.1.1', 'cwischema_c4.1.1.sql'
-            Table c4locs is added.
-             
-        'c4.2.0', 'cwischema_c4.2.0.sql'
-            Table c4id is modified to include all wellids and all Unique Numbers.
-         
-        'c4.2.1', 'cwischema_c4.2.1.sql'
-            Constraints added to table c4id to enforce data integrity.  
-                The raw data cloned from cwi may not pass all integrity checks.
-  
+        schema_versions and constraints
+        -------------------------------
+        c4.0.# & c4.1.# define the tables exactly as MGS (except c4locs).
+        c4.2.# & up add column wellid to every table.
+        c4.3.# & up may put foreign key and unique constraints on the wellid
+                 column, so the row generator must supply the wellid at the 
+                 time that a record is created.
         """
          
         table_names = self.data_table_names 
@@ -228,10 +237,19 @@ class cwi_csvupdate():
             csv_cols = headers.replace('"',' ').replace(',',' ').split()
          
             col_names, col_convert = get_col_names_and_converters(db, tablename, csv_cols)
-            insert = f"INSERT INTO {tablename}({', '.join(col_names)}) VALUES ({db.qmarks(col_names)});"
             
+            if schema_has_constraints and not 'WELLID' in headers.upper():
+                insert = (f"INSERT INTO {tablename}\n"
+                          f" (wellid, {', '.join(col_names)})\n"
+                          f" VALUES ({db.qmarks( len(col_names) + 1 )});")
+                csvgen = csv_wellid_generator
+            else:
+                insert = (f"INSERT INTO {tablename}\n"
+                          f" ({', '.join(col_names)})\n"
+                          f" VALUES ({db.qmarks(col_names)});")
+                csvgen = csv_generator
             print ('begin: ',insert)
-            db.cur.executemany(insert, csv_generator(csvname, col_names, col_convert))
+            db.cur.executemany(insert, csvgen(csvname, col_names, col_convert))
             print (f"Completed table {tablename}")
              
     def import_cwi_locs(self, db):
@@ -311,19 +329,13 @@ def RUN_import_csv(data=True,
     """
     from MNcwi_sqlite import c4db 
     import MNcwi_config as C
-    
-    schema = int(C.MNcwi_DB_VERSION.split('.')[1])
-    version = int(C.MNcwi_DB_VERSION.split('.')[2])
-    
-    haslocs = schema >= 1
-    haswellid = schema >= 2
-    hasfkconstraints = schema >= 3
-    hasMNUmodel = schema >= 4
-         
-#     if hasfkconstraints:
-#         raise NotImplementedError('FK constraint schemas not implemented')
-    if hasMNUmodel:
-        raise NotImplementedError('Identifier table model not implemented')
+       
+    hasMNUmodel = C.MNcwi_SCHEMA_VERSION >= 4
+        
+#     if C.MNcwi_SCHEMA_HAS_CONSTRAINTS:
+#         raise NotImplementedError('wellid constraint schemas not implemented')
+    if C.MNcwi_SCHEMA_IDENTIFIER_MODEL == 'MNU':
+        raise NotImplementedError('MNU Identifier model is not implemented')
 
     C4 = cwi_csvupdate( C.MNcwi_DOWNLOAD_CWIDATACSV_DIR,
                         C.MNcwi_DOWNLOAD_DIR)
@@ -335,22 +347,22 @@ def RUN_import_csv(data=True,
         if create: 
             print (f"creating from {C.MNcwi_DB_SCHEMA}")
             C4.create_tables_from_schema(db, C.MNcwi_DB_SCHEMA)
-        if hasfkconstraints:
+        if C.MNcwi_SCHEMA_HAS_CONSTRAINTS:
             db.query('PRAGMA foreign_keys = False')
         if data: 
             C4.delete_table_data(db, 'data')
-            C4.import_data_from_csv( db, C.MNcwi_DB_VERSION)
+            C4.import_data_from_csv( db, C.MNcwi_SCHEMA_HAS_CONSTRAINTS)
             db.commit_db()
-        if locs and haslocs: 
+        if locs and C.MNcwi_SCHEMA_HAS_LOCS: 
             C4.delete_table_data(db,'locs')
             C4.import_cwi_locs(db)
             db.commit_db()
-        if haswellid:
-            C4.populate_wellid_and_index(db, haslocs)
+        if C.MNcwi_SCHEMA_HAS_WELLID and not C.MNcwi_SCHEMA_HAS_CONSTRAINTS:
+            C4.populate_wellid_and_index(db, C.MNcwi_SCHEMA_HAS_LOCS)
             db.commit_db()
         
-        if hasfkconstraints:
-            C4.query('PRAGMA foreign_keys = True')
+        if C.MNcwi_SCHEMA_HAS_CONSTRAINTS:
+            db.query('PRAGMA foreign_keys = True')
  
 if __name__ == '__main__':
     RUN_import_csv()

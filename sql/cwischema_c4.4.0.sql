@@ -103,7 +103,7 @@ CREATE TABLE c4ad (
 	OTHER	    TEXT,                                        
 	CONSTRAINT fk_c4ad_wellid 
 	    FOREIGN KEY (wellid)
-	    REFERENCES c4ix (well_id) 
+	    REFERENCES c4ix (wellid) 
         ON UPDATE CASCADE
         ON DELETE RESTRICT
 );
@@ -118,7 +118,7 @@ CREATE TABLE c4an (
 	ANG_DEPTH	INTEGER,
 	CONSTRAINT fk_c4an_wellid                              
 	    FOREIGN KEY (wellid)
-	    REFERENCES c4ix (well_id) 
+	    REFERENCES c4ix (wellid) 
         ON UPDATE CASCADE
         ON DELETE RESTRICT
 );
@@ -165,7 +165,7 @@ CREATE TABLE c4c1 (
     UPDT_DATE   INTEGER,
 	CONSTRAINT fk_c4c1_wellid                              
 	    FOREIGN KEY (wellid)
-	    REFERENCES c4ix (well_id) 
+	    REFERENCES c4ix (wellid) 
         ON UPDATE CASCADE
         ON DELETE RESTRICT
 );
@@ -185,7 +185,7 @@ CREATE TABLE c4c2 (
     UNITS       CHAR,
 	CONSTRAINT fk_c4c2_wellid 
 	    FOREIGN KEY (wellid)
-	    REFERENCES c4ix (well_id) 
+	    REFERENCES c4ix (wellid) 
         ON UPDATE CASCADE
         ON DELETE RESTRICT
 );
@@ -201,7 +201,7 @@ CREATE TABLE c4id (
 	is_pMNU     INTEGER NOT NULL DEFAULT (0),                        
 	CONSTRAINT fk_c4id_wellid 
 	    FOREIGN KEY (wellid)
-	    REFERENCES c4ix (well_id) 
+	    REFERENCES c4ix (wellid) 
         ON UPDATE CASCADE
         ON DELETE RESTRICT,	
 	CONSTRAINT chk_is_MNU_VALUE                             
@@ -240,7 +240,7 @@ CREATE TABLE c4pl (
     PUMP_MEAS   REAL,
 	CONSTRAINT fk_c4pl_wellid                              
 	    FOREIGN KEY (wellid)
-	    REFERENCES c4ix (well_id) 
+	    REFERENCES c4ix (wellid) 
         ON UPDATE CASCADE
         ON DELETE RESTRICT
 );
@@ -255,7 +255,7 @@ CREATE TABLE c4rm (
 		UNIQUE (wellid, SEQ_NO),
 	CONSTRAINT fk_c4rm_wellid                              
 	    FOREIGN KEY (wellid)
-	    REFERENCES c4ix (well_id) 
+	    REFERENCES c4ix (wellid) 
         ON UPDATE CASCADE
         ON DELETE RESTRICT
 );
@@ -279,7 +279,7 @@ CREATE TABLE c4st (
 		UNIQUE (wellid, DEPTH_BOT),
 	CONSTRAINT fk_c4st_wellid                              
 	    FOREIGN KEY (wellid)
-	    REFERENCES c4ix (well_id) 
+	    REFERENCES c4ix (wellid) 
         ON UPDATE CASCADE
         ON DELETE RESTRICT
 );
@@ -301,7 +301,7 @@ CREATE TABLE c4wl (
     UPDT_DATE   INTEGER,
 	CONSTRAINT fk_c4wl_wellid                              
 	    FOREIGN KEY (wellid)
-	    REFERENCES c4ix (well_id) 
+	    REFERENCES c4ix (wellid) 
         ON UPDATE CASCADE
         ON DELETE RESTRICT
 );
@@ -379,7 +379,7 @@ CREATE TABLE c4locs (
 		UNIQUE (wellid),
 	CONSTRAINT fk_c4locs_wellid   
 	    FOREIGN KEY (wellid)
-	    REFERENCES c4ix (well_id) 
+	    REFERENCES c4ix (wellid) 
         ON UPDATE CASCADE
         ON DELETE RESTRICT
 );
