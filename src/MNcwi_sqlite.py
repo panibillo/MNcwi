@@ -213,6 +213,7 @@ class DB_SQLite(DB_context_manager):
         except Exception as e:
             print (e)
             return False
+        
     def query(self, sql, vals=None, n=None):
         """ 
         Execute a query and return the result set
@@ -292,6 +293,26 @@ class c4db(DB_SQLite):
               f" commit={self._context_autocommit})")
         return rv
 
+    def update_unique_no_from_wellid(self):
+        """
+        Update column UNIQUE_NO in table c5ix to remove leading zeros.
+        
+        Notes
+        -----
+        This routine does not issue a COMMIT
+        
+        Assumes that the wellid is equivalent to the Unique_no. That assumption
+        should be true for versions of cwi through c4 and c5 at least.
+        """
+        u = "update c4ix set UNIQUE_NO = cast(wellid as text);"     
+        try:
+            self.query(u)
+            return True
+        except Exception as e:
+            print ('update_unique_no_from_wellid():\n  ', e)
+            return False 
+        
+        
 
 if __name__=='__main__':
     COMMIT = False

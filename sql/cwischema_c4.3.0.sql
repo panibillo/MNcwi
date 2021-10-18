@@ -23,12 +23,12 @@ assistance of the Minnesota Department of Health.
 https://www.sqlite.org
 
 */
-
 CREATE TABLE c4ix (
     rowid       INTEGER PRIMARY KEY NOT NULL,
     wellid      INTEGER NOT NULL,
     RELATEID    TEXT    NOT NULL,                          
-    COUNTY_C    INTEGER,                                   
+    COUNTY_C    INTEGER, 
+    UNIQUE_NO	TEXT,
     WELLNAME    TEXT,
     TOWNSHIP    INTEGER,
     "RANGE"     INTEGER,

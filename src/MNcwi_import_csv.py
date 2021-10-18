@@ -250,7 +250,7 @@ class cwi_csvupdate():
                 csvgen = csv_generator
             print ('begin: ',insert)
             db.cur.executemany(insert, csvgen(csvname, col_names, col_convert))
-            print (f"Completed table {tablename}")
+            print (f"Completed table {tablename}") 
              
     def import_cwi_locs(self, db):
         """
@@ -347,16 +347,23 @@ def RUN_import_csv(data=True,
         if create: 
             print (f"creating from {C.MNcwi_DB_SCHEMA}")
             C4.create_tables_from_schema(db, C.MNcwi_DB_SCHEMA)
+
         if C.MNcwi_SCHEMA_HAS_CONSTRAINTS:
             db.query('PRAGMA foreign_keys = False')
+
         if data: 
             C4.delete_table_data(db, 'data')
             C4.import_data_from_csv( db, C.MNcwi_SCHEMA_HAS_CONSTRAINTS)
             db.commit_db()
+
+            db.update_unique_no_from_wellid()
+            db.commit_db()
+
         if locs and C.MNcwi_SCHEMA_HAS_LOCS: 
             C4.delete_table_data(db,'locs')
             C4.import_cwi_locs(db)
             db.commit_db()
+
         if C.MNcwi_SCHEMA_HAS_WELLID and not C.MNcwi_SCHEMA_HAS_CONSTRAINTS:
             C4.populate_wellid_and_index(db, C.MNcwi_SCHEMA_HAS_LOCS)
             db.commit_db()

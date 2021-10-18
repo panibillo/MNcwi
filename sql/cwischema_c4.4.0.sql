@@ -35,6 +35,7 @@ CREATE TABLE c4ix (
     wellid      INTEGER NOT NULL,	                                
     RELATEID    TEXT    NOT NULL,                            
     COUNTY_C    INTEGER,                                     
+    UNIQUE_NO	TEXT,
     WELLNAME    TEXT,
     TOWNSHIP    INTEGER,
     "RANGE"     INTEGER,
