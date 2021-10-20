@@ -14,6 +14,9 @@ To import this file, write:
 @author: William Olsen
 '''
 
+MNcwi_SCHEMA_IDENTIFIER_MODEL = 'CWI'
+MNcwi_MNU_INSERT = None
+
 if   0:
     MNcwi_DB_VERSION = "c4.0.0"
     MNcwi_DB_SCHEMA  = "../sql/cwischema_c4.0.0.sql"
@@ -26,13 +29,15 @@ elif 0:
     MNcwi_DB_VERSION = "c4.2.0"
     MNcwi_DB_SCHEMA  = "../sql/cwischema_c4.2.0.sql"
     MNcwi_DB_NAME    = "../db/MNcwi20.sqlite"
-elif 1:
+elif 0:
     MNcwi_DB_VERSION = "c4.3.0"
     MNcwi_DB_SCHEMA  = "../sql/cwischema_c4.3.0.sql"
     MNcwi_DB_NAME    = "../db/MNcwi30.sqlite"
-elif 0:
+elif 1:
     MNcwi_DB_VERSION = "c4.4.0"
+    MNcwi_SCHEMA_IDENTIFIER_MODEL = 'MNU'
     MNcwi_DB_SCHEMA  = "../sql/cwischema_c4.4.0.sql"
+    MNcwi_MNU_INSERT = "../sql/mnu_insert_c4.4.0.sql"
     MNcwi_DB_NAME    = "../db/MNcwi40.sqlite"
 
 MNcwi_SCHEMA_VERSION = int(MNcwi_DB_VERSION.split('.')[1])
@@ -41,12 +46,8 @@ MNcwi_SCHEMA_MINOR_VERSION = int(MNcwi_DB_VERSION.split('.')[2])
 MNcwi_SCHEMA_HAS_LOCS = MNcwi_SCHEMA_VERSION >= 1
 MNcwi_SCHEMA_HAS_WELLID = MNcwi_SCHEMA_VERSION >= 2
 MNcwi_SCHEMA_HAS_CONSTRAINTS = MNcwi_SCHEMA_VERSION >= 3
-
-if MNcwi_SCHEMA_VERSION < 4:
-    MNcwi_SCHEMA_IDENTIFIER_MODEL = 'CWI'
-elif MNcwi_SCHEMA_VERSION == 4:
-    MNcwi_SCHEMA_IDENTIFIER_MODEL = 'MNU'
-    
+MNcwi_REFORMAT_UNIQUE_NO = MNcwi_SCHEMA_VERSION >= 3
+   
 MNcwi_DOWNLOAD_FILES = [ 
     "cwidata_csv.zip",
     "cwilocs.zip",

@@ -293,10 +293,14 @@ class c4db(DB_SQLite):
               f" commit={self._context_autocommit})")
         return rv
 
-    def update_unique_no_from_wellid(self):
+    def update_unique_no_from_wellid(self, tablename):
         """
         Update column UNIQUE_NO in table c5ix to remove leading zeros.
         
+        Arguments
+        ---------
+        tablename: string.  value is either 'c4ix' or 'c4locs'
+            
         Notes
         -----
         This routine does not issue a COMMIT
@@ -304,40 +308,81 @@ class c4db(DB_SQLite):
         Assumes that the wellid is equivalent to the Unique_no. That assumption
         should be true for versions of cwi through c4 and c5 at least.
         """
-        u = "update c4ix set UNIQUE_NO = cast(wellid as text);"     
+        assert tablename in ('c4ix c4locs')
+        u = f"update {tablename} set UNIQUE_NO = cast(wellid as text);"     
         try:
             self.query(u)
             return True
         except Exception as e:
             print ('update_unique_no_from_wellid():\n  ', e)
             return False 
+
         
-        
+     
+#     def set_triggers_enabled(self, enable):
+#         assert isinstance(enable, bool)
+#         if self.connection_open:
+#             self.con.create_function("trigs_enabled", 0, self.
+#         
+# def triggers_on():      
+#     return 1  
+# def triggers_off():      
+#     return 0  
 
 if __name__=='__main__':
-    COMMIT = False
-    DB_NAME = ":memory:"
-    print("\nDemonstrate opening c4db using a context manager")
-    with c4db(db_name=DB_NAME, commit=COMMIT) as db:
+    if 0: 
+        print ('Test of __str__() and __repr__()')
+        COMMIT = False
+        DB_NAME = ":memory:"
+        print("\nDemonstrate opening c4db using a context manager")
+        with c4db(db_name=DB_NAME, commit=COMMIT) as db:
+            print (repr(db))
+            print (db)
+    
+        print("\nDemonstrate opening and closing c4db without a context manager")
+        db = c4db(db_name=DB_NAME, open_db=False,  commit=True)
         print (repr(db))
         print (db)
-
-    print("\nDemonstrate opening and closing c4db without a context manager")
-    db = c4db(db_name=DB_NAME, open_db=False,  commit=True)
-    print (repr(db))
-    print (db)
-    db.close_db()
-       
-    print("\nDemonstrate opening DB_SQLite using a context manager")
-    with DB_SQLite(db_name=DB_NAME) as db:
+        db.close_db()
+           
+        print("\nDemonstrate opening DB_SQLite using a context manager")
+        with DB_SQLite(db_name=DB_NAME) as db:
+            print (repr(db))
+            print (db)
+    
+        print("\nDemonstrate opening and closing DB_SQLite without a context manager")
+        db = DB_SQLite(db_name=DB_NAME, open_db=True,  commit=False)
         print (repr(db))
         print (db)
+        db.close_db()
+    if 1:
+        assert isinstance(True, bool)
+        assert isinstance(False, bool)
+        DB_NAME = ":memory:"
+        
+        con = sqlite.connect(":memory:")
+        cur = con.cursor()
+        print (type(con), con)
+        print (type(cur))
+        con.create_function("trig_enabled", 0, triggers_on)
+        cur.execute("select trig_enabled()" )
+        print ('ON?', cur.fetchone()[0])
+        con.create_function("trig_enabled", 0, triggers_off)
+        cur.execute("select trig_enabled()" )
+        print ('OFF?', cur.fetchone()[0])
 
-    print("\nDemonstrate opening and closing DB_SQLite without a context manager")
-    db = DB_SQLite(db_name=DB_NAME, open_db=True,  commit=False)
-    print (repr(db))
-    print (db)
-    db.close_db()
+        with c4db(db_name=DB_NAME, commit=True, open_db=True) as db:
+            print (type(db.con), db.con)
+            print (type(db.cur))
+            print (db.connection_open)
+            print (db.get_tablenames())
+            db.con.create_function("trig_enabled", 0, triggers_on)
+            db.con.create_function("trig_enabled", 0, triggers_on)
+            v = db.queryone("trig_enabled()")
+            print ('ON?',v)
+            db.con.create_function('triggers_enabled', 0, triggers_off)
+            v = db.queryone("triggers_enabled()")
+            print ('OFF?',v)
         
     print ('\n',r'\\\\\\\\\\\\\\\\\\ DONE //////////////////')        
         

@@ -24,10 +24,11 @@ c4.2.0	Columns rowid and wellid are added explicitly to each table (as columns 1
 
 c4.3.0  Foreign key constraints (wellid) are added to the data tables  
 	The raw data cloned from cwi may not pass all integrity checks.
+	In tables c4ix and c4locs, text values in the UNIQUE_NO column are reformatted to remove leading zeros. 
 
 c4.4.0  Table c4id is modified to include all wellids and all Well Unique Numbers.
-	Boolean fields 'is_MNU' and 'is_pMNU' are added to c4id. (integers = 0/1/Null).
-	See notes below on 'Modified Identifier Table'.
+	Two boolean fields 'is_MNU' and 'is_pMNU' are added to c4id. (integers = 0/1/Null).
+	See notes below on 'Modified Identifier Model'.
 
 Notes on the data tables
 
@@ -45,13 +46,24 @@ Notes on the data tables
 		c4st
 		c4wl
 
+Notes on SQLite datatypes
+	SQLite is unique among database engines in generally not enforcing data types as declared for columns. Each value is assigned a datatype based on the value itself, following a set of relatively loose 'affinity rules'.  
+		See  https://www.sqlite.org/datatype3.html
+	This has 3 important consequences:
+		1) The cwi tables really have only 3 actual data types: 
+			integer, real, text
+		2) Table definitions and data import methods may contain errors in type declarations that remain undetected because SQLite silently handles type conversions using its own type affinity rules.  Stored values may not have the data type declared in the column.
+		3) SQLite may internally convert types when making comparison tests in WHERE clauses.  That usually works, but introduces ambiguity unless the rules are very well understood.
+	
 Notes on table c4locs
 
-	Well coordinates are published on the ftp site only in 2 shape files, named wells.shp (located wells) and unloc_wells.shp (unlocated wells).  In the Sqlite database, well locations are held in a single new table named 
+	Well coordinates are published on the ftp site in 2 shape files, named wells.shp (located wells) and unloc_wells.shp (unlocated wells).  In the Sqlite database, well locations are held in a single new table named 
 		c4locs.  
-	It is a clone of the attribute tables from the shape files and includes records from both shape files. It includes columns for the UTM coordinates.  
+	Table c4locs is a clone of the attribute tables from the shape files and includes records from both shape files. It includes columns for the UTM coordinates.  
 	
 	Records from the 2 shape files are distinguished by entering 'loc' or 'unloc' in a newly defined column named 'CWI_loc'.
+	
+	The shape files may contain well records not present in c4ix or the other data tables.  These appear to be the most recent additions.
 
 Notes on the code tables
 
@@ -78,7 +90,7 @@ Notes on wellid column
 	
 	In version c4.4.0 table c4id takes primacy for well identifiers, and new constraints are placed on both identifiers and wellid's.  Data as served from CWI may not pass all constraints of this model.
 	
-Notes on Modified Identifier Table (version c4.4.0)
+Notes on Modified Identifier Model (version c4.4.0)
 
 	The meaning of table c4id is changed from 'Alternate identifiers table' to simply 'Identifiers table'.  All Unique Well Numbers in table c4ix are appended to c4id, and c4id should be the only table searched for Unique Well Numbers when a reliable search is required.
 	
@@ -89,8 +101,77 @@ Notes on Modified Identifier Table (version c4.4.0)
 	A conditional unique index is created on the c4id table using the is_MNU flag to enforce that each MNU identifier is unique.  These identifiers are then reliable for identifying wells outside of the context of the CWI database, for example for use as archival identifiers in paper or electronic files.  A VIEW, c4idu, is created of c4id that exposes only is_MNU=1 identifiers.  When searching for wells in this database by Unique Well Number, it is advised to search the identifiers values in this table.  Such a search is guaranteed to find any identifier that is or was a Minnesota Unique Well number.  Such a search may return multiple instances for an individual wellid, in the event that the search includes multiple identifiers assigned to the same well.
 	
 	A conditional unique index is created on the c4id table using the is_pMNU flag to enforce that each wellid has only one identifier flagged as is_pMNU.  A VIEW, c4idp, is created of c4id that exposes only is_pMNU=1 identifiers.  When exporting data from CWI, it is advised to join the data with this view and to identify each well using the identifier exposed in this view.
+	
+	Logic for merging well records.	Let's assume that wellid 202 is to be merged into wellid 101.  In general, if the lower valued wellid is a MUN, then it should be kept and the higher valued wellid removed. This data model has no history tables and no 'undo' capability.	
+	
+		Step 1) Edit each data table (excluding c4id) to collect valid data in the records for wellid 101.
+		Step 2) Edit the identifiers table to point all identifiers to the same wellid: 
+			"UPDATE c4id SET wellid=101, is_pMNU=0 WHERE wellid=202;" 
+		Step 3) Delete records for wellid 202 in each data table (excluding c4id, which now has none)
+	
 
+Notes on Modified Identifier Model (version c4.4.1)	
+	
+	In this model, history tables are added, and merge undo is implemented.
+	
+	Foreign key constraints are changed from ON DELETE RESTRICT to ON DELETE CASCADE
+	
+	Implement as much of the merge logic as possible as triggers rather than coding in the interface.
+	
+	Logic for merging well records.	Let's assume that wellid 202 is to be merged into wellid 101.  In general, if the lower valued wellid is a MUN, then it should be kept and the higher valued wellid removed.  
+	
+		Step 1) Edit the identifiers table to point all identifiers to the same wellid: 
+			"UPDATE c4id SET wellid=101, is_pMNU=0 WHERE wellid=202;" 
+		Note that the is_pMNU flag must be unset. Otherwise it is quite elementary.
+			
+		Trigger tr_c4id_update fires. This is an "AFTER UPDATE" trigger.
+			A) If NEW.wellid = OLD.wellid, EXIT or write to history and then EXIT.
+			   If NEW.wellid != OLD.wellid: go to step B
+			B) create merge documenters in the merge table)
+				CREATE TABLE c4merges (mergeid, wellid_retained, wellid_deleted, merge_action, merge_dt, merge_user)
+			B) Write records for wellid 202 to history, with the merge identifier.	 
+			C) Delete records for wellid 202 in c4ix. This will fire Trigger tr_c4ix_delete
+				"DELETE FROM c4ix WHERE wellid=OLD.wellid"
+		
+		Trigger tr_c4ix_delete fires. This is a "BEFORE DELETE" trigger.
+		(see section "5. Cautions On The Use Of BEFORE triggers" in https://www.sqlite.org/lang_createtrigger.html  The trigger should not modify the deleted row(s). Since it only writes to history, it should be alright.
+			A) If a merge identifier exists, then write the deleted and retained records to history, with the merge documenters.
+				INSERT INTO h1ix (field list, HISTORY_REASON, MERGE_ID, HISTORY_DT, HISTORY_USER)
+				  SELECT (field list, "DELETED", "MERGE", mergeid, merge_dt, merge_user)
+				  WHERE wellid = OLD.wellid
+				INSERT INTO h1ix (field list, ")
+				  SELECT (field list, "RETAINED", "MERGE", mergeid, merge_dt, merge_user)
+				  WHERE wellid = NEW.wellid
+			B) Continue on to the delete the OLD.wellid in c4ix.  Foreign key constraint then cause cascading deletes in the remaining data files.
+			
+		Triggers tr_c4**_delete fire.  These are all "BEFORE DELETE" triggers.
+			A) If a merge identifier exists, then write the deleted and retained records to history, with the merge documenters.
+				(same structure as trigger tr_c4ix_delete)
+			
+		Step 2) The user has to review the retained records for wellid 101 and the history records for wellid 202, and make sure that useful/correct information is retained. 
+			A) UPDATE retained records with suplemental information from matching history records.
+			B) INSERT unmatched history records with wellid 202 into c4** tables using wellid 101.
+			
+	Logic for Un-mergeing well records.	Let's assume that wellid 202 was merged into wellid 101.
+	The retained wellid is known in table c4ix. 
+	The c4merge table is consulted for the mergeid, timestamp, and deleted wellid value.
+	If there have been no subsequent edits to c4 tables, then:
+		turn triggers off (see https://stackoverflow.com/questions/2250959/how-to-handle-a-missing-feature-of-sqlite-disable-triggers )		
+		PRAGMA FOREIGN KEYS OFF
+		for tablename in (list of data tables):
+			DELETE from c4** WHERE wellid = 101
+			INSERT INTO c4**(field list) SELECT fieldlist FROM h4** 
+				WHERE mergeid = ? AND merge_action = "MERGE" AND wellid IN (101, 202);
+			INSERT INTO c4merges (mergeid, wellid_retained, wellid_deleted, merge_dt, merge_user)
+				VALUES (mergeid, 101, 202, "UNMERGE", current_dt, current_user) 
+		turn triggers on
+		PRAGMA FOREIGN KEYS ON
 
+	If thre have been subsequent edits to c4 tables, those will be restricted to the retained wellid 101.  
+		1) Run the DELETE from c4** with triggers on, creating a new history thread
+		2) Restore records from the original merge history thread with triggers off.
+		3) Manually compare the restored records with the both history thread records to reclaim  valid information in the new history thread that was added since the original merge history thread.
+		
 References:
 
 	County Well Index, 2021, Database created and maintained by the Minnesota Geological Survey, a department of the University of Minnesota,  with the assistance of the Minnesota Department of Health.

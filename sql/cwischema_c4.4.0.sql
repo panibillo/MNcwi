@@ -1,23 +1,23 @@
 /* CWI SCHEMA 
 
-Version:	c4.3.0	
-Date:   	2021-02-10
-Author: 	William Olsen   
+Version:    c4.4.0    
+Date:       2021-02-10
+Author:     William Olsen   
 
 These are DDL statements for an SqlLite version of the CWI database.
 
 This version:
-	- Contains the c4 data tables
-	- Adds table c4locs for well coordinates.
-	- Adds rowid and wellid to each c4 data table
-	- Adds Foreign Key constraints to all tables, wellid -> c4ix(wellid)
-	+ Makes c4id into the main location for all well identifiers.
-		+ Add all Unique Well Numbers in c4ix to c4id.
-		+ Add conditional unique indices on c4id to enforce uniqueness.
-		+ Add Views on c4id to simplify using Unique Well Numbers for search
-		  and for export.
-		+ Data, as cloned from cwi, may not pass all integrity checks.
-		
+    - Contains the c4 data tables
+    - Adds table c4locs for well coordinates.
+    - Adds rowid and wellid to each c4 data table
+    - Adds Foreign Key constraints to all tables, wellid -> c4ix(wellid)
+    + Makes c4id into the main location for all well identifiers.
+        + Add all Unique Well Numbers in c4ix to c4id.
+        + Add conditional unique indices on c4id to enforce uniqueness.
+        + Add Views on c4id to simplify using Unique Well Numbers for search
+          and for export.
+        + Data, as cloned from cwi, may not pass all integrity checks.
+        
 References:
 
 sql/cwischema_c4_versions.txt
@@ -32,10 +32,10 @@ https://www.sqlite.org
 
 CREATE TABLE c4ix (
     rowid       INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
-    wellid      INTEGER NOT NULL,	                                
+    wellid      INTEGER NOT NULL,                                    
     RELATEID    TEXT    NOT NULL,                            
     COUNTY_C    INTEGER,                                     
-    UNIQUE_NO	TEXT,
+    UNIQUE_NO    TEXT,
     WELLNAME    TEXT,
     TOWNSHIP    INTEGER,
     "RANGE"     INTEGER,
@@ -56,7 +56,7 @@ CREATE TABLE c4ix (
     CASE_DIAM   REAL,
     CASE_DEPTH  REAL,
     GROUT       CHAR,
-    POLLUT_DST  REAL,
+    POLLUT_DST  INTEGER,
     POLLUT_DIR  TEXT,
     POLLUT_TYP  TEXT,
     STRAT_DATE  INTEGER,
@@ -82,13 +82,13 @@ CREATE TABLE c4ix (
     UNUSED      CHAR,
     ENTRY_DATE  INTEGER,
     UPDT_DATE   INTEGER,
-	CONSTRAINT un_c4ix_wellid
-		UNIQUE (wellid) 
+    CONSTRAINT un_c4ix_wellid
+        UNIQUE (wellid) 
 );
 
 CREATE TABLE c4ad (
     rowid       INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,  
-    wellid      INTEGER NOT NULL,	                                
+    wellid      INTEGER NOT NULL,                                    
     RELATEID    TEXT    NOT NULL,
     NAME        TEXT,
     ADDTYPE_C   CHAR,
@@ -101,32 +101,32 @@ CREATE TABLE c4ad (
     ZIPCODE     TEXT,
     ENTRY_DATE  INTEGER,
     UPDT_DATE   INTEGER,
-	OTHER	    TEXT,                                        
-	CONSTRAINT fk_c4ad_wellid 
-	    FOREIGN KEY (wellid)
-	    REFERENCES c4ix (wellid) 
+    OTHER        TEXT,                                        
+    CONSTRAINT fk_c4ad_wellid 
+        FOREIGN KEY (wellid)
+        REFERENCES c4ix (wellid) 
         ON UPDATE CASCADE
         ON DELETE RESTRICT
 );
 
 CREATE TABLE c4an (
     rowid       INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
-    wellid      INTEGER NOT NULL,	                       
+    wellid      INTEGER NOT NULL,                           
     RELATEID    TEXT    NOT NULL,
-	C5AN_SEQ_NO REAL,
-	AZIMUTH		INTEGER,
-	INCLIN		INTEGER,
-	ANG_DEPTH	INTEGER,
-	CONSTRAINT fk_c4an_wellid                              
-	    FOREIGN KEY (wellid)
-	    REFERENCES c4ix (wellid) 
+    C5AN_SEQ_NO REAL,
+    AZIMUTH        INTEGER,
+    INCLIN        INTEGER,
+    ANG_DEPTH    INTEGER,
+    CONSTRAINT fk_c4an_wellid                              
+        FOREIGN KEY (wellid)
+        REFERENCES c4ix (wellid) 
         ON UPDATE CASCADE
         ON DELETE RESTRICT
 );
 
 CREATE TABLE c4c1 (
     rowid       INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
-    wellid      INTEGER NOT NULL,	                                
+    wellid      INTEGER NOT NULL,                                    
     RELATEID    TEXT    NOT NULL,
     DRILL_METH  CHAR,
     DRILL_FLUD  CHAR,
@@ -143,9 +143,9 @@ CREATE TABLE c4c1 (
     OHBOTFEET   REAL,
     SCREEN_MFG  TEXT,
     SCREEN_TYP  CHAR,
-  	PTLSS_MFG   TEXT,
-  	PTLSS_MDL   TEXT,
-  	BSMT_OFFST  CHAR,
+    PTLSS_MFG   TEXT,
+    PTLSS_MDL   TEXT,
+    BSMT_OFFST  CHAR,
     CSG_TOP_OK  CHAR,
     CSG_AT_GRD  CHAR,
     PLSTC_PROT  CHAR,
@@ -164,16 +164,16 @@ CREATE TABLE c4c1 (
     DRLLR_NAME  TEXT,
     ENTRY_DATE  INTEGER,
     UPDT_DATE   INTEGER,
-	CONSTRAINT fk_c4c1_wellid                              
-	    FOREIGN KEY (wellid)
-	    REFERENCES c4ix (wellid) 
+    CONSTRAINT fk_c4c1_wellid                              
+        FOREIGN KEY (wellid)
+        REFERENCES c4ix (wellid) 
         ON UPDATE CASCADE
         ON DELETE RESTRICT
 );
 
 CREATE TABLE c4c2 (
     rowid       INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
-    wellid      INTEGER NOT NULL,	                                
+    wellid      INTEGER NOT NULL,                                    
     RELATEID    TEXT    NOT NULL,
     CONSTYPE    CHAR,
     FROM_DEPTH  REAL,
@@ -184,54 +184,55 @@ CREATE TABLE c4c2 (
     MATERIAL    CHAR,
     AMOUNT      REAL,
     UNITS       CHAR,
-	CONSTRAINT fk_c4c2_wellid 
-	    FOREIGN KEY (wellid)
-	    REFERENCES c4ix (wellid) 
+    CONSTRAINT fk_c4c2_wellid 
+        FOREIGN KEY (wellid)
+        REFERENCES c4ix (wellid) 
         ON UPDATE CASCADE
         ON DELETE RESTRICT
 );
 
 CREATE TABLE c4id (
     rowid       INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, 
-    wellid      INTEGER NOT NULL,	                                
+    wellid      INTEGER NOT NULL,                                    
     RELATEID    TEXT    NOT NULL,
     IDENTIFIER  TEXT    NOT NULL,
     ID_TYPE     TEXT,
     ID_PROG     TEXT,
-	is_MNU      INTEGER NOT NULL DEFAULT (0),                        
-	is_pMNU     INTEGER NOT NULL DEFAULT (0),                        
-	CONSTRAINT fk_c4id_wellid 
-	    FOREIGN KEY (wellid)
-	    REFERENCES c4ix (wellid) 
+    is_MNU      INTEGER NOT NULL DEFAULT (0),                        
+    is_pMNU     INTEGER NOT NULL DEFAULT (0),                        
+    CONSTRAINT fk_c4id_wellid 
+        FOREIGN KEY (wellid)
+        REFERENCES c4ix (wellid) 
         ON UPDATE CASCADE
-        ON DELETE RESTRICT,	
-	CONSTRAINT chk_is_MNU_VALUE                             
-	    CHECK (is_MNU IN (0,1))
-	CONSTRAINT chk_is_pMNU_VALUE                             
-	    CHECK (is_pMNU IN (0,1))
-	CONSTRAINT chk_is_pMNU_TRUE                             
-	    CHECK (is_MNU = 1 WHERE is_pMNU = 1)
-);
+        ON DELETE RESTRICT,    
+    CONSTRAINT chk_is_MNU_VALUE                             
+        CHECK (is_MNU IN (0,1)),
+    CONSTRAINT chk_is_pMNU_VALUE                             
+        CHECK (is_pMNU IN (0,1)),
+    CONSTRAINT chk_is_pMNU_TRUE                             
+        CHECK ((is_pMNU = is_MNU) OR (is_pMNU = 0))
+        -- can have is_pMU=1 AND is_MNU=1, or is_pMNU=0 and is_MNU=anything
+); 
 
 CREATE UNIQUE INDEX ux_c4id_IDENTIFIER_is_MNU               
-	ON c4id (IDENTIFIER)
-	WHERE is_MNU = 1;
+    ON c4id (IDENTIFIER)
+    WHERE is_MNU = 1;
 
 CREATE UNIQUE INDEX ux_c4id_IDENTIFIER_is_pMNU              
-	ON c4id (wellid)
-	WHERE is_pMNU = 1;
-	
+    ON c4id (wellid)
+    WHERE is_pMNU = 1;
+    
 CREATE VIEW c4idu AS
-	SELECT * FROM c4id 
-	WHERE is_MNU = 1;
+    SELECT * FROM c4id 
+    WHERE is_MNU = 1;
 
 CREATE VIEW c4idp AS
-	SELECT *  FROM c4id 
-	WHERE is_PMNU = 1;
+    SELECT *  FROM c4id 
+    WHERE is_PMNU = 1;
 
 CREATE TABLE c4pl (
     rowid       INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
-    wellid      INTEGER NOT NULL,	                       
+    wellid      INTEGER NOT NULL,                           
     RELATEID    TEXT    NOT NULL,
     PUMPTESTID  INTEGER,
     TEST_DATE   INTEGER,
@@ -239,31 +240,35 @@ CREATE TABLE c4pl (
     FLOW_RATE   REAL,
     DURATION    REAL,
     PUMP_MEAS   REAL,
-	CONSTRAINT fk_c4pl_wellid                              
-	    FOREIGN KEY (wellid)
-	    REFERENCES c4ix (wellid) 
+    CONSTRAINT fk_c4pl_wellid                              
+        FOREIGN KEY (wellid)
+        REFERENCES c4ix (wellid) 
         ON UPDATE CASCADE
         ON DELETE RESTRICT
 );
 
+--    CONSTRAINT un_c4rm_wellid_SEQ_NO                       
+--        UNIQUE (wellid, SEQ_NO),
 CREATE TABLE c4rm (
     rowid       INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
-    wellid      INTEGER NOT NULL,	                       
+    wellid      INTEGER NOT NULL,                           
     RELATEID    TEXT    NOT NULL,
     SEQ_NO      INTEGER,
     REMARKS     TEXT,
-	CONSTRAINT un_c4rm_wellid_SEQ_NO                       
-		UNIQUE (wellid, SEQ_NO),
-	CONSTRAINT fk_c4rm_wellid                              
-	    FOREIGN KEY (wellid)
-	    REFERENCES c4ix (wellid) 
+    CONSTRAINT fk_c4rm_wellid                              
+        FOREIGN KEY (wellid)
+        REFERENCES c4ix (wellid) 
         ON UPDATE CASCADE
         ON DELETE RESTRICT
 );
 
+--    CONSTRAINT un_c4st_wellid_DEPTH_TOP                    
+--        UNIQUE (wellid, DEPTH_TOP),
+--    CONSTRAINT un_c4st_wellid_DEPTH_BOT                    
+--        UNIQUE (wellid, DEPTH_BOT),
 CREATE TABLE c4st (
     rowid       INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
-    wellid      INTEGER NOT NULL,	                       
+    wellid      INTEGER NOT NULL,                           
     RELATEID    TEXT    NOT NULL,
     DEPTH_TOP   REAL,
     DEPTH_BOT   REAL,
@@ -274,20 +279,16 @@ CREATE TABLE c4st (
     LITH_PRIM   TEXT,
     LITH_SEC    TEXT,
     LITH_MINOR  TEXT,
-	CONSTRAINT un_c4st_wellid_DEPTH_TOP                    
-		UNIQUE (wellid, DEPTH_TOP),
-	CONSTRAINT un_c4st_wellid_DEPTH_BOT                    
-		UNIQUE (wellid, DEPTH_BOT),
-	CONSTRAINT fk_c4st_wellid                              
-	    FOREIGN KEY (wellid)
-	    REFERENCES c4ix (wellid) 
+    CONSTRAINT fk_c4st_wellid                              
+        FOREIGN KEY (wellid)
+        REFERENCES c4ix (wellid) 
         ON UPDATE CASCADE
         ON DELETE RESTRICT
 );
 
 CREATE TABLE c4wl (
     rowid       INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
-    wellid      INTEGER NOT NULL,	                       
+    wellid      INTEGER NOT NULL,                           
     RELATEID    TEXT    NOT NULL,
     MEAS_TYPE   TEXT,
     MEAS_DATE   INTEGER,
@@ -300,25 +301,25 @@ CREATE TABLE c4wl (
     PROGRAM     TEXT,
     ENTRY_DATE  INTEGER,
     UPDT_DATE   INTEGER,
-	CONSTRAINT fk_c4wl_wellid                              
-	    FOREIGN KEY (wellid)
-	    REFERENCES c4ix (wellid) 
+    CONSTRAINT fk_c4wl_wellid                              
+        FOREIGN KEY (wellid)
+        REFERENCES c4ix (wellid) 
         ON UPDATE CASCADE
         ON DELETE RESTRICT
 );
 
 CREATE TABLE c4locs (                                      
     rowid       INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
-    wellid      INTEGER NOT NULL,	                       
-    CWI_loc     TEXT,                    					
+    wellid      INTEGER NOT NULL,                           
+    CWI_loc     TEXT,                                        
     RELATEID    TEXT,
-    COUNTY_C    TEXT,
+    COUNTY_C    INTEGER,
     UNIQUE_NO   TEXT,
     WELLNAME    TEXT,
-    TOWNSHIP    REAL,
-    "RANGE"     REAL,
+    TOWNSHIP    INTEGER,
+    "RANGE"     INTEGER,
     RANGE_DIR   TEXT,
-    SECTION     REAL,
+    SECTION     INTEGER,
     SUBSECTION  TEXT,
     MGSQUAD_C   TEXT,
     ELEVATION   REAL,
@@ -330,15 +331,15 @@ CREATE TABLE c4locs (
     DATA_SRC    TEXT,
     DEPTH_DRLL  REAL,
     DEPTH_COMP  REAL,
-    DATE_DRLL   REAL,
+    DATE_DRLL   INTEGER,
     CASE_DIAM   REAL,
     CASE_DEPTH  REAL,
     GROUT       TEXT,
-    POLLUT_DST  REAL,
+    POLLUT_DST  INTEGER,
     POLLUT_DIR  TEXT,
     POLLUT_TYP  TEXT,
-    STRAT_DATE  REAL,
-    STRAT_UPD   REAL,
+    STRAT_DATE  INTEGER,
+    STRAT_UPD   INTEGER,
     STRAT_SRC   TEXT,
     STRAT_GEOL  TEXT,
     STRAT_MC    TEXT,
@@ -358,29 +359,29 @@ CREATE TABLE c4locs (
     DH_VIDEO    TEXT,
     INPUT_SRC   TEXT,
     UNUSED      TEXT,
-    ENTRY_DATE  REAL,
-    UPDT_DATE   REAL,
+    ENTRY_DATE  INTEGER,
+    UPDT_DATE   INTEGER,
     GEOC_TYPE   TEXT,
     GCM_CODE    TEXT,
     GEOC_SRC    TEXT,
     GEOC_PRG    TEXT,
     UTME        REAL,
     UTMN        REAL,
-    GEOC_ENTRY  REAL,
-    GEOC_DATE   REAL,
-    GEOCUPD_EN  REAL,
-    GEOCUPD_DA  REAL,
-    RCVD_DATE   REAL,
+    GEOC_ENTRY  INTEGER,
+    GEOC_DATE   INTEGER,
+    GEOCUPD_EN  INTEGER,
+    GEOCUPD_DA  INTEGER,
+    RCVD_DATE   INTEGER,
     WELL_LABEL  TEXT,
-    SWLCOUNT    REAL,
-    SWLDATE     REAL,
+    SWLCOUNT    INTEGER,
+    SWLDATE     INTEGER,
     SWLAVGMEAS  REAL,
     SWLAVGELEV  REAL,
-	CONSTRAINT un_c4locs_wellid   
-		UNIQUE (wellid),
-	CONSTRAINT fk_c4locs_wellid   
-	    FOREIGN KEY (wellid)
-	    REFERENCES c4ix (wellid) 
+    CONSTRAINT un_c4locs_wellid   
+        UNIQUE (wellid),
+    CONSTRAINT fk_c4locs_wellid   
+        FOREIGN KEY (wellid)
+        REFERENCES c4ix (wellid) 
         ON UPDATE CASCADE
         ON DELETE RESTRICT
 );

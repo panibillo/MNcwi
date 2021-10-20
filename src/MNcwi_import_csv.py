@@ -113,11 +113,13 @@ def shp_locs_generator(shpname):
     assert os.path.exists(shpname), f"Shape file not found {shpname}."
     with shapefile.Reader(shpname) as shpf: 
         keys = tuple((f[0] for f in shpf.fields[1:]))
-#         cols = tuple(['cwi_loc'] + [f[0] for f in shpf.fields[1:]])
-#         qmarks = c4db.qmarks(cols)
-#         s = f"""insert into c4locs ({', '.join(cols)}) values ({qmarks});"""
-#         print (s)
+        
+#         print ('DEBUG : ICOUNT STATMENT IS FOR DEBUG')
+#         ICOUNT = 0
         for srec in shpf:
+#             ICOUNT += 1
+#             if ICOUNT > 10: 
+#                 break
             yield tuple([cwi_loc] + [srec.record[k] for k in keys])
 
 
@@ -158,7 +160,7 @@ class cwi_csvupdate():
         return statements
          
            
-    def create_tables_from_schema(self, db, c4schemafile):
+    def execute_statements_from_file(self, db, c4schemafile):
         """
         Confirm that the database does not exist, and create it.
         Read the table definitions from an sql file
@@ -167,7 +169,7 @@ class cwi_csvupdate():
         statements = self.read_sql_file(c4schemafile)
         for s in statements:
             db.query(s)
-    
+
     def delete_table_data(self, db, 
                           tables=None):    
         """
@@ -254,11 +256,11 @@ class cwi_csvupdate():
              
     def import_cwi_locs(self, db):
         """
-        Import the shapefiles into table c4locs.
+        Import the shapefiles into table c4locs. 
         
         There is one shapefile for located wells (wells.shp) and another for
         unlocated wells (unloc_wells.shp). Both are read into a single table,
-        c4locs. Their origin is distinguished by the value in a newly added
+        c4locs. Their origin  is distinguished by the value in a newly added
         column 'cwi_loc' with values of either 'loc' or 'unloc'.
         
         All columns defined in the shapefiles should have matching named columns
@@ -286,6 +288,54 @@ class cwi_csvupdate():
             print ('begin: ',insert)
             db.cur.executemany(insert, shp_locs_generator(shpname))
             print (f'completed import of shapefile {shpname}')
+
+    def append_c4locs_to_c4ix(self, db):        
+        """
+        Append new records in c4locs to c4ix.
+        
+        The shapefiles may contain well records not yet entered in the cwi data 
+        tables. These records are identified because they have wellid values 
+        missing from c4ix. 
+        
+        These records must be appended to c4ix in order to meet the Foreign Key 
+        constraint (c4locs.wellid references c4ix.wellid).  Information from 
+        these records is not added o other c4 data tables, even if the 
+        information is present.
+        """
+        print ('Appending Recent records in c4locs to c4ix')
+        i = """Insert into c4ix (
+                    wellid, RELATEID, COUNTY_C, UNIQUE_NO, WELLNAME,
+                    TOWNSHIP, RANGE, RANGE_DIR, SECTION, SUBSECTION, MGSQUAD_C,
+                    ELEVATION, ELEV_MC,
+                    STATUS_C, USE_C,
+                    LOC_MC, LOC_SRC, DATA_SRC,
+                    DEPTH_DRLL, DEPTH_COMP, DATE_DRLL,
+                    CASE_DIAM, CASE_DEPTH, GROUT,
+                    POLLUT_DST, POLLUT_DIR, POLLUT_TYP,
+                    STRAT_DATE, STRAT_UPD, STRAT_SRC, STRAT_GEOL, STRAT_MC,
+                    DEPTH2BDRK, FIRST_BDRK, LAST_STRAT, OHTOPUNIT, OHBOTUNIT,
+                    AQUIFER, CUTTINGS, CORE, BHGEOPHYS,
+                    GEOCHEM, WATERCHEM, OBWELL, SWL, DH_VIDEO,
+                    INPUT_SRC, UNUSED, ENTRY_DATE, UPDT_DATE)
+                SELECT
+                    L.wellid, L.RELATEID, L.COUNTY_C, L.UNIQUE_NO, L.WELLNAME,
+                    L.TOWNSHIP, L.RANGE, L.RANGE_DIR, L.SECTION, L.SUBSECTION, L.MGSQUAD_C,
+                    L.ELEVATION, L.ELEV_MC,
+                    L.STATUS_C, L.USE_C,
+                    L.LOC_MC, L.LOC_SRC, L.DATA_SRC,
+                    L.DEPTH_DRLL, L.DEPTH_COMP, L.DATE_DRLL,
+                    L.CASE_DIAM, L.CASE_DEPTH, L.GROUT,
+                    L.POLLUT_DST, L.POLLUT_DIR, L.POLLUT_TYP,
+                    L.STRAT_DATE, L.STRAT_UPD, L.STRAT_SRC, L.STRAT_GEOL, L.STRAT_MC,
+                    L.DEPTH2BDRK, L.FIRST_BDRK, L.LAST_STRAT, L.OHTOPUNIT, L.OHBOTUNIT,
+                    L.AQUIFER, L.CUTTINGS, L.CORE, L.BHGEOPHYS,
+                    L.GEOCHEM, L.WATERCHEM, L.OBWELL, L.SWL, L.DH_VIDEO,
+                    L.INPUT_SRC, L.UNUSED, L.ENTRY_DATE, L.UPDT_DATE
+                FROM c4locs L
+                LEFT JOIN c4ix X
+                  ON L.wellid = X.wellid
+                  WHERE X.wellid IS NULL;""".replace('                ','')
+        db.query(i)
             
     def populate_wellid_and_index(self, db, haslocs):
         """
@@ -334,8 +384,8 @@ def RUN_import_csv(data=True,
         
 #     if C.MNcwi_SCHEMA_HAS_CONSTRAINTS:
 #         raise NotImplementedError('wellid constraint schemas not implemented')
-    if C.MNcwi_SCHEMA_IDENTIFIER_MODEL == 'MNU':
-        raise NotImplementedError('MNU Identifier model is not implemented')
+#     if C.MNcwi_SCHEMA_IDENTIFIER_MODEL == 'MNU':
+#         raise NotImplementedError('MNU Identifier model is not implemented')
 
     C4 = cwi_csvupdate( C.MNcwi_DOWNLOAD_CWIDATACSV_DIR,
                         C.MNcwi_DOWNLOAD_DIR)
@@ -344,35 +394,50 @@ def RUN_import_csv(data=True,
     
     print (f"Importing data to {C.MNcwi_DOWNLOAD_DB_NAME}")
     with c4db(db_name=C.MNcwi_DOWNLOAD_DB_NAME, commit=True) as db:
-        if create: 
-            print (f"creating from {C.MNcwi_DB_SCHEMA}")
-            C4.create_tables_from_schema(db, C.MNcwi_DB_SCHEMA)
-
+        
+#         if create: 
+#             print (f"creating tables, constraints, and views from {C.MNcwi_DB_SCHEMA}")
+#             C4.execute_statements_from_file(db, C.MNcwi_DB_SCHEMA)
+# 
         if C.MNcwi_SCHEMA_HAS_CONSTRAINTS:
             db.query('PRAGMA foreign_keys = False')
+# 
+#         if data: 
+#             C4.delete_table_data(db, 'data')
+#             C4.import_data_from_csv( db, C.MNcwi_SCHEMA_HAS_CONSTRAINTS)
+#             db.commit_db()
+# 
+#         if locs and C.MNcwi_SCHEMA_HAS_LOCS: 
+#             C4.delete_table_data(db,'locs')
+#             C4.import_cwi_locs(db)
+#             db.commit_db()
+# 
+#         if C.MNcwi_SCHEMA_HAS_WELLID: # and not C.MNcwi_SCHEMA_HAS_CONSTRAINTS:
+#             C4.populate_wellid_and_index(db, C.MNcwi_SCHEMA_HAS_LOCS)
+#             db.commit_db()
+#             
+# 
+#         if C.MNcwi_REFORMAT_UNIQUE_NO:
+#             if data:
+#                 db.update_unique_no_from_wellid('c4ix')
+#                 db.commit_db()
+#             if locs and C.MNcwi_SCHEMA_HAS_LOCS:
+#                 db.update_unique_no_from_wellid('c4locs')
+#                 db.commit_db()
 
-        if data: 
-            C4.delete_table_data(db, 'data')
-            C4.import_data_from_csv( db, C.MNcwi_SCHEMA_HAS_CONSTRAINTS)
-            db.commit_db()
-
-            db.update_unique_no_from_wellid()
-            db.commit_db()
-
-        if locs and C.MNcwi_SCHEMA_HAS_LOCS: 
-            C4.delete_table_data(db,'locs')
-            C4.import_cwi_locs(db)
-            db.commit_db()
-
-        if C.MNcwi_SCHEMA_HAS_WELLID and not C.MNcwi_SCHEMA_HAS_CONSTRAINTS:
-            C4.populate_wellid_and_index(db, C.MNcwi_SCHEMA_HAS_LOCS)
-            db.commit_db()
+#         if C.MNcwi_SCHEMA_IDENTIFIER_MODEL == 'MNU':
+#             C4.execute_statements_from_file(db, C.MNcwi_MNU_INSERT)
         
+        if C.MNcwi_SCHEMA_HAS_CONSTRAINTS and C.MNcwi_SCHEMA_HAS_LOCS:
+            C4.append_c4locs_to_c4ix(db)
+            db.commit_db()
+            
         if C.MNcwi_SCHEMA_HAS_CONSTRAINTS:
             db.query('PRAGMA foreign_keys = True')
  
 if __name__ == '__main__':
     RUN_import_csv()
+ 
     
     print ('\n',r'\\\\\\\\\\\\\\\\\\ DONE //////////////////')    
         
