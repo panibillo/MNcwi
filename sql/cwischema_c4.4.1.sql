@@ -1,6 +1,6 @@
 /* CWI SCHEMA 
 
-Version:    c4.4.0    
+Version:    c4.4.1    
 Date:       2021-02-10
 Author:     William Olsen   
 
@@ -13,10 +13,14 @@ This version:
     - Adds Foreign Key constraints to all tables, wellid -> c4ix(wellid)
     + Makes c4id into the main location for all well identifiers.
         + Add all Unique Well Numbers in c4ix to c4id.
-        + Add conditional unique indices on c4id to enforce uniqueness of 
-          the primary identifier.
+        + Add conditional unique indices on c4id to enforce uniqueness.
+        + Add conditional unique index on c4id to enforce uniqueness of 
+          the primary MNU identifier.
+        + Add conditional unique index on c4id to enforce uniqueness of 
+          the MNU identifiers.
         + Add Views on c4id to simplify using Unique Well Numbers for search
-          and for export. (Views are defined in mnu_views_c4.4.0)
+          and for export.
+        + Add UNIQUE constraints to data tables to prevent redundancies.
         + Data, as cloned from cwi, may not pass all integrity checks.
         
 References:
@@ -215,11 +219,16 @@ CREATE TABLE c4id (
         -- can have is_pMU=1 AND is_MNU=1, or is_pMNU=0 and is_MNU=anything
 ); 
 
+CREATE UNIQUE INDEX ux_c4id_IDENTIFIER_is_MNU               
+    ON c4id (IDENTIFIER)
+    WHERE is_MNU = 1
+;
+
 CREATE UNIQUE INDEX ux_c4id_IDENTIFIER_is_pMNU              
     ON c4id (wellid)
     WHERE is_pMNU = 1
 ;
-
+ 
 CREATE TABLE c4pl (
     rowid       INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
     wellid      INTEGER NOT NULL,                           
@@ -237,14 +246,14 @@ CREATE TABLE c4pl (
         ON DELETE RESTRICT
 );
 
---    CONSTRAINT un_c4rm_wellid_SEQ_NO                       
---        UNIQUE (wellid, SEQ_NO),
 CREATE TABLE c4rm (
     rowid       INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
     wellid      INTEGER NOT NULL,                           
     RELATEID    TEXT    NOT NULL,
     SEQ_NO      INTEGER,
     REMARKS     TEXT,
+    CONSTRAINT un_c4rm_wellid_SEQ_NO                       
+        UNIQUE (wellid, SEQ_NO),
     CONSTRAINT fk_c4rm_wellid                              
         FOREIGN KEY (wellid)
         REFERENCES c4ix (wellid) 
@@ -252,10 +261,6 @@ CREATE TABLE c4rm (
         ON DELETE RESTRICT
 );
 
---    CONSTRAINT un_c4st_wellid_DEPTH_TOP                    
---        UNIQUE (wellid, DEPTH_TOP),
---    CONSTRAINT un_c4st_wellid_DEPTH_BOT                    
---        UNIQUE (wellid, DEPTH_BOT),
 CREATE TABLE c4st (
     rowid       INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
     wellid      INTEGER NOT NULL,                           
@@ -269,6 +274,10 @@ CREATE TABLE c4st (
     LITH_PRIM   TEXT,
     LITH_SEC    TEXT,
     LITH_MINOR  TEXT,
+    CONSTRAINT un_c4st_wellid_DEPTH_TOP                    
+        UNIQUE (wellid, DEPTH_TOP),
+    CONSTRAINT un_c4st_wellid_DEPTH_BOT                    
+        UNIQUE (wellid, DEPTH_BOT),
     CONSTRAINT fk_c4st_wellid                              
         FOREIGN KEY (wellid)
         REFERENCES c4ix (wellid) 

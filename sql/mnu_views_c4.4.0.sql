@@ -33,11 +33,13 @@ https://www.sqlite.org
 
 CREATE VIEW v4idu AS
     SELECT * FROM c4id
-    WHERE is_MNU = 1;
+    WHERE is_MNU = 1
+;
 
 CREATE VIEW v4idp AS
     SELECT *  FROM c4id
-    WHERE is_PMNU = 1;
+    WHERE is_PMNU = 1
+;
 
 CREATE VIEW v4ix AS
 SELECT

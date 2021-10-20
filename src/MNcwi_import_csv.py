@@ -380,12 +380,11 @@ def RUN_import_csv(data=True,
     from MNcwi_sqlite import c4db 
     import MNcwi_config as C
        
-    hasMNUmodel = C.MNcwi_SCHEMA_VERSION >= 4
-        
-#     if C.MNcwi_SCHEMA_HAS_CONSTRAINTS:
+#     if C.MNcwi_SCHEMA_HAS_FKwellid_CONSTRAINTS:
 #         raise NotImplementedError('wellid constraint schemas not implemented')
-#     if C.MNcwi_SCHEMA_IDENTIFIER_MODEL == 'MNU':
-#         raise NotImplementedError('MNU Identifier model is not implemented')
+    if C.MNcwi_SCHEMA_HAS_DATA_CONSTRAINTS:
+        print('Warning. The CWI data files do not pass UNIQUE constaints')
+        raise NotImplementedError('Data constraints models are not implemented')
 
     C4 = cwi_csvupdate( C.MNcwi_DOWNLOAD_CWIDATACSV_DIR,
                         C.MNcwi_DOWNLOAD_DIR)
@@ -395,44 +394,44 @@ def RUN_import_csv(data=True,
     print (f"Importing data to {C.MNcwi_DOWNLOAD_DB_NAME}")
     with c4db(db_name=C.MNcwi_DOWNLOAD_DB_NAME, commit=True) as db:
         
-#         if create: 
-#             print (f"creating tables, constraints, and views from {C.MNcwi_DB_SCHEMA}")
-#             C4.execute_statements_from_file(db, C.MNcwi_DB_SCHEMA)
-# 
-        if C.MNcwi_SCHEMA_HAS_CONSTRAINTS:
+        if create: 
+            print (f"creating tables, constraints, and views from {C.MNcwi_DB_SCHEMA}")
+            C4.execute_statements_from_file(db, C.MNcwi_DB_SCHEMA)
+ 
+        if C.MNcwi_SCHEMA_HAS_FKwellid_CONSTRAINTS:
             db.query('PRAGMA foreign_keys = False')
-# 
-#         if data: 
-#             C4.delete_table_data(db, 'data')
-#             C4.import_data_from_csv( db, C.MNcwi_SCHEMA_HAS_CONSTRAINTS)
-#             db.commit_db()
-# 
-#         if locs and C.MNcwi_SCHEMA_HAS_LOCS: 
-#             C4.delete_table_data(db,'locs')
-#             C4.import_cwi_locs(db)
-#             db.commit_db()
-# 
-#         if C.MNcwi_SCHEMA_HAS_WELLID: # and not C.MNcwi_SCHEMA_HAS_CONSTRAINTS:
-#             C4.populate_wellid_and_index(db, C.MNcwi_SCHEMA_HAS_LOCS)
-#             db.commit_db()
-#             
-# 
-#         if C.MNcwi_REFORMAT_UNIQUE_NO:
-#             if data:
-#                 db.update_unique_no_from_wellid('c4ix')
-#                 db.commit_db()
-#             if locs and C.MNcwi_SCHEMA_HAS_LOCS:
-#                 db.update_unique_no_from_wellid('c4locs')
-#                 db.commit_db()
-
-#         if C.MNcwi_SCHEMA_IDENTIFIER_MODEL == 'MNU':
-#             C4.execute_statements_from_file(db, C.MNcwi_MNU_INSERT)
+ 
+        if data: 
+            C4.delete_table_data(db, 'data')
+            C4.import_data_from_csv( db, C.MNcwi_SCHEMA_HAS_FKwellid_CONSTRAINTS)
+            db.commit_db()
+ 
+        if locs and C.MNcwi_SCHEMA_HAS_LOCS: 
+            C4.delete_table_data(db,'locs')
+            C4.import_cwi_locs(db)
+            db.commit_db()
+ 
+        if C.MNcwi_SCHEMA_HAS_WELLID: # and not C.MNcwi_SCHEMA_HAS_FKwellid_CONSTRAINTS:
+            C4.populate_wellid_and_index(db, C.MNcwi_SCHEMA_HAS_LOCS)
+            db.commit_db()
+             
+ 
+        if C.MNcwi_REFORMAT_UNIQUE_NO:
+            if data:
+                db.update_unique_no_from_wellid('c4ix')
+                db.commit_db()
+            if locs and C.MNcwi_SCHEMA_HAS_LOCS:
+                db.update_unique_no_from_wellid('c4locs')
+                db.commit_db()
+ 
+        if C.MNcwi_SCHEMA_IDENTIFIER_MODEL == 'MNU':
+            C4.execute_statements_from_file(db, C.MNcwi_MNU_INSERT)
         
-        if C.MNcwi_SCHEMA_HAS_CONSTRAINTS and C.MNcwi_SCHEMA_HAS_LOCS:
+        if C.MNcwi_SCHEMA_HAS_FKwellid_CONSTRAINTS and C.MNcwi_SCHEMA_HAS_LOCS:
             C4.append_c4locs_to_c4ix(db)
             db.commit_db()
             
-        if C.MNcwi_SCHEMA_HAS_CONSTRAINTS:
+        if C.MNcwi_SCHEMA_HAS_FKwellid_CONSTRAINTS:
             db.query('PRAGMA foreign_keys = True')
  
 if __name__ == '__main__':
