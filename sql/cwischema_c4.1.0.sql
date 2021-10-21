@@ -1,26 +1,79 @@
-/* CWI SCHEMA 
+/* CWI SCHEMA
 
-Version:	c4.1.0	
-Date:   	2021-02-10
-Author: 	William Olsen   
+Version:    c4.1.0
+Date:       2021-02-10
+Author:     William Olsen
 
 These are DDL statements for an SqlLite version of the CWI database.
 
 This version:
-	- Contains the c4 data tables
-	+ Adds table c4locs for well coordinates.
+    - Contains the c4 data tables
+    + Adds table c4locs for well coordinates.
 
 References:
 
 sql/cwischema_c4_versions.txt
 
-County Well Index, 2021, Database created and maintained by the Minnesota 
-Geological Survey, a department of the University of Minnesota,  with the 
+County Well Index, 2021, Database created and maintained by the Minnesota
+Geological Survey, a department of the University of Minnesota,  with the
 assistance of the Minnesota Department of Health.
 
 https://www.sqlite.org
 
 */
+
+CREATE TABLE c4ix (
+    RELATEID    TEXT    NOT NULL,
+    COUNTY_C    INTEGER,
+    UNIQUE_NO   TEXT,
+    WELLID      INTEGER,
+    WELLNAME    TEXT,
+    TOWNSHIP    INTEGER,
+    "RANGE"     INTEGER,
+    RANGE_DIR   TEXT,
+    SECTION     INTEGER,
+    SUBSECTION  TEXT,
+    MGSQUAD_C   TEXT,
+    ELEVATION   INTEGER,
+    ELEV_MC     TEXT,
+    STATUS_C    CHAR,
+    USE_C       TEXT,
+    LOC_MC      CHAR,
+    LOC_SRC     TEXT,
+    DATA_SRC    TEXT,
+    DEPTH_DRLL  REAL,
+    DEPTH_COMP  REAL,
+    DATE_DRLL   INTEGER,
+    CASE_DIAM   REAL,
+    CASE_DEPTH  REAL,
+    GROUT       CHAR,
+    POLLUT_DST  INTEGER,
+    POLLUT_DIR  TEXT,
+    POLLUT_TYP  TEXT,
+    STRAT_DATE  INTEGER,
+    STRAT_UPD   INTEGER,
+    STRAT_SRC   TEXT,
+    STRAT_GEOL  TEXT,
+    STRAT_MC    CHAR,
+    DEPTH2BDRK  REAL,
+    FIRST_BDRK  TEXT,
+    LAST_STRAT  TEXT,
+    OHTOPUNIT   TEXT,
+    OHBOTUNIT   TEXT,
+    AQUIFER     TEXT,
+    CUTTINGS    CHAR,
+    CORE        CHAR,
+    BHGEOPHYS   CHAR,
+    GEOCHEM     CHAR,
+    WATERCHEM   CHAR,
+    OBWELL      CHAR,
+    SWL         CHAR,
+    DH_VIDEO    CHAR,
+    INPUT_SRC   TEXT,
+    UNUSED      CHAR,
+    ENTRY_DATE  INTEGER,
+    UPDT_DATE   INTEGER
+);
 
 CREATE TABLE c4ad (
     RELATEID   TEXT    NOT NULL,
@@ -35,15 +88,15 @@ CREATE TABLE c4ad (
     ZIPCODE    TEXT,
     ENTRY_DATE INTEGER,
     UPDT_DATE  INTEGER,
-	OTHER	   TEXT 
+    OTHER       TEXT
 );
 
 CREATE TABLE c4an (
     RELATEID    TEXT    NOT NULL,
-	C5AN_SEQ_NO REAL,
-	AZIMUTH		INTEGER,
-	INCLIN		INTEGER,
-	ANG_DEPTH	INTEGER
+    C5AN_SEQ_NO REAL,
+    AZIMUTH        INTEGER,
+    INCLIN        INTEGER,
+    ANG_DEPTH    INTEGER
 );
 
 CREATE TABLE c4c1 (
@@ -63,9 +116,9 @@ CREATE TABLE c4c1 (
     OHBOTFEET   REAL,
     SCREEN_MFG  TEXT,
     SCREEN_TYP  CHAR,
-  	PTLSS_MFG   TEXT,
-  	PTLSS_MDL   TEXT,
-  	BSMT_OFFST  CHAR,
+    PTLSS_MFG   TEXT,
+    PTLSS_MDL   TEXT,
+    BSMT_OFFST  CHAR,
     CSG_TOP_OK  CHAR,
     CSG_AT_GRD  CHAR,
     PLSTC_PROT  CHAR,
@@ -104,59 +157,6 @@ CREATE TABLE c4id (
     IDENTIFIER  TEXT    NOT NULL,
     ID_TYPE     TEXT,
     ID_PROG     TEXT
-);
-
-CREATE TABLE c4ix (
-    RELATEID    TEXT    NOT NULL,
-    COUNTY_C    INTEGER,
-    UNIQUE_NO   TEXT,   
-  	WELLID      INTEGER,
-    WELLNAME    TEXT,
-    TOWNSHIP    INTEGER,
-    "RANGE"     INTEGER,
-    RANGE_DIR   TEXT,
-    SECTION     INTEGER,
-    SUBSECTION  TEXT,
-    MGSQUAD_C   TEXT,
-    ELEVATION   INTEGER,
-    ELEV_MC     TEXT,
-    STATUS_C    CHAR,
-    USE_C       TEXT,
-    LOC_MC      CHAR,
-    LOC_SRC     TEXT,
-    DATA_SRC    TEXT,
-    DEPTH_DRLL  REAL,
-    DEPTH_COMP  REAL,
-    DATE_DRLL   INTEGER,
-    CASE_DIAM   REAL,
-    CASE_DEPTH  REAL,
-    GROUT       CHAR,
-    POLLUT_DST  REAL,
-    POLLUT_DIR  TEXT,
-    POLLUT_TYP  TEXT,
-    STRAT_DATE  INTEGER,
-    STRAT_UPD   INTEGER,
-    STRAT_SRC   TEXT,
-    STRAT_GEOL  TEXT,
-    STRAT_MC    CHAR,
-    DEPTH2BDRK  REAL,
-    FIRST_BDRK  TEXT,
-    LAST_STRAT  TEXT,
-    OHTOPUNIT   TEXT,
-    OHBOTUNIT   TEXT,
-    AQUIFER     TEXT,
-    CUTTINGS    CHAR,
-    CORE        CHAR,
-    BHGEOPHYS   CHAR,
-    GEOCHEM     CHAR,
-    WATERCHEM   CHAR,
-    OBWELL      CHAR,
-    SWL         CHAR,
-    DH_VIDEO    CHAR,
-    INPUT_SRC   TEXT,
-    UNUSED      CHAR,
-    ENTRY_DATE  INTEGER,
-    UPDT_DATE   INTEGER
 );
 
 CREATE TABLE c4pl (
@@ -203,17 +203,17 @@ CREATE TABLE c4wl (
     UPDT_DATE   INTEGER
 );
 
-CREATE TABLE c4locs (    
+CREATE TABLE c4locs (
     wellid      INTEGER,
-    CWI_loc     TEXT,    
+    CWI_loc     TEXT,
     RELATEID    TEXT,
-    COUNTY_C    TEXT,
+    COUNTY_C    INTEGER,
     UNIQUE_NO   TEXT,
     WELLNAME    TEXT,
-    TOWNSHIP    REAL,
-    "RANGE"     REAL,
+    TOWNSHIP    INTEGER,
+    "RANGE"     INTEGER,
     RANGE_DIR   TEXT,
-    SECTION     REAL,
+    SECTION     INTEGER,
     SUBSECTION  TEXT,
     MGSQUAD_C   TEXT,
     ELEVATION   REAL,
@@ -225,15 +225,15 @@ CREATE TABLE c4locs (
     DATA_SRC    TEXT,
     DEPTH_DRLL  REAL,
     DEPTH_COMP  REAL,
-    DATE_DRLL   REAL,
+    DATE_DRLL   INTEGER,
     CASE_DIAM   REAL,
     CASE_DEPTH  REAL,
     GROUT       TEXT,
-    POLLUT_DST  REAL,
+    POLLUT_DST  INTEGER,
     POLLUT_DIR  TEXT,
     POLLUT_TYP  TEXT,
-    STRAT_DATE  REAL,
-    STRAT_UPD   REAL,
+    STRAT_DATE  INTEGER,
+    STRAT_UPD   INTEGER,
     STRAT_SRC   TEXT,
     STRAT_GEOL  TEXT,
     STRAT_MC    TEXT,
@@ -253,22 +253,22 @@ CREATE TABLE c4locs (
     DH_VIDEO    TEXT,
     INPUT_SRC   TEXT,
     UNUSED      TEXT,
-    ENTRY_DATE  REAL,
-    UPDT_DATE   REAL,
+    ENTRY_DATE  INTEGER,
+    UPDT_DATE   INTEGER,
     GEOC_TYPE   TEXT,
     GCM_CODE    TEXT,
     GEOC_SRC    TEXT,
     GEOC_PRG    TEXT,
     UTME        REAL,
     UTMN        REAL,
-    GEOC_ENTRY  REAL,
-    GEOC_DATE   REAL,
-    GEOCUPD_EN  REAL,
-    GEOCUPD_DA  REAL,
-    RCVD_DATE   REAL,
+    GEOC_ENTRY  INTEGER,
+    GEOC_DATE   INTEGER,
+    GEOCUPD_EN  INTEGER,
+    GEOCUPD_DA  INTEGER,
+    RCVD_DATE   INTEGER,
     WELL_LABEL  TEXT,
-    SWLCOUNT    REAL,
-    SWLDATE     REAL,
+    SWLCOUNT    INTEGER,
+    SWLDATE     INTEGER,
     SWLAVGMEAS  REAL,
     SWLAVGELEV  REAL
 );

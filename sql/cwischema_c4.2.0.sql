@@ -1,131 +1,34 @@
-/* CWI SCHEMA 
+/* CWI SCHEMA
 
-Version:	c4.3.0	
-Date:   	2021-02-10
-Author: 	William Olsen   
+Version:    c4.2.0 
+Date:       2021-02-10
+Author:     William Olsen
 
 These are DDL statements for an SqlLite version of the CWI database.
 
 This version:
-	- Contains the c4 data tables
-	- Adds table c4locs for well coordinates.
-	+ Adds rowid and wellid to each c4 data table
+    - Contains the c4 data tables
+    - Adds table c4locs for well coordinates.
+    + Adds rowid and wellid to each c4 data table
 
 References:
 
 sql/cwischema_c4_versions.txt
 
-County Well Index, 2021, Database created and maintained by the Minnesota 
-Geological Survey, a department of the University of Minnesota,  with the 
+County Well Index, 2021, Database created and maintained by the Minnesota
+Geological Survey, a department of the University of Minnesota,  with the
 assistance of the Minnesota Department of Health.
 
 https://www.sqlite.org
 
 */
 
-CREATE TABLE c4ad (
-    rowid      INTEGER PRIMARY KEY NOT NULL, 
-    wellid     INTEGER,	                                   
-    RELATEID   TEXT    NOT NULL,
-    NAME       TEXT,
-    ADDTYPE_C  CHAR,
-    HOUSE_NO   TEXT,
-    STREET     TEXT,
-    ROAD_TYPE  TEXT,
-    ROAD_DIR   TEXT,
-    CITY       TEXT,
-    STATE      TEXT,
-    ZIPCODE    TEXT,
-    ENTRY_DATE INTEGER,
-    UPDT_DATE  INTEGER,
-	OTHER	   TEXT 
-);
-
-CREATE TABLE c4an (
-    rowid       INTEGER PRIMARY KEY NOT NULL,
-    wellid      INTEGER,	                               
-    RELATEID    TEXT    NOT NULL,
-	C5AN_SEQ_NO REAL,
-	AZIMUTH		INTEGER,
-	INCLIN		INTEGER,
-	ANG_DEPTH	INTEGER
-);
-
-CREATE TABLE c4c1 (
-    rowid       INTEGER PRIMARY KEY NOT NULL,
-    wellid      INTEGER,	                               
-    RELATEID    TEXT    NOT NULL,
-    DRILL_METH  CHAR,
-    DRILL_FLUD  CHAR,
-    HYDROFRAC   CHAR,
-    HFFROM      REAL,
-    HFTO        REAL,
-    CASE_MAT    CHAR,
-    CASE_JOINT  CHAR,
-    CASE_TOP    REAL,
-    DRIVE_SHOE  CHAR,
-    CASE_TYPE   CHAR,
-    SCREEN      CHAR,
-    OHTOPFEET   REAL,
-    OHBOTFEET   REAL,
-    SCREEN_MFG  TEXT,
-    SCREEN_TYP  CHAR,
-  	PTLSS_MFG   TEXT,
-  	PTLSS_MDL   TEXT,
-  	BSMT_OFFST  CHAR,
-    CSG_TOP_OK  CHAR,
-    CSG_AT_GRD  CHAR,
-    PLSTC_PROT  CHAR,
-    DISINFECTD  CHAR,
-    PUMP_INST   CHAR,
-    PUMP_DATE   INTEGER,
-    PUMP_MFG    TEXT,
-    PUMP_MODEL  TEXT,
-    PUMP_HP     REAL,
-    PUMP_VOLTS  INTEGER,
-    DROPP_LEN   REAL,
-    DROPP_MAT   CHAR,
-    PUMP_CPCTY  REAL,
-    PUMP_TYPE   CHAR,
-    VARIANCE    CHAR,
-    DRLLR_NAME  TEXT,
-    ENTRY_DATE  INTEGER,
-    UPDT_DATE   INTEGER
-);
-
-CREATE TABLE c4c2 (
-    rowid       INTEGER PRIMARY KEY NOT NULL,
-    wellid      INTEGER,	                               
-    RELATEID    TEXT    NOT NULL,
-    CONSTYPE    CHAR,
-    FROM_DEPTH  REAL,
-    TO_DEPTH    REAL,
-    DIAMETER    REAL,
-    SLOT        REAL,
-    LENGTH      REAL,
-    MATERIAL    CHAR,
-    AMOUNT      REAL,
-    UNITS       CHAR
-);
-
-CREATE TABLE c4id (
-    rowid       INTEGER PRIMARY KEY NOT NULL,
-    wellid      INTEGER,	                               
-    RELATEID    TEXT    NOT NULL,
-    IDENTIFIER  TEXT    NOT NULL,
-    ID_TYPE     TEXT,
-    ID_PROG     TEXT,
-	is_MNU      INTEGER DEFAULT (0),                       
-	is_pMNU     INTEGER DEFAULT (0),                       
-	cwi_dupe    INTEGER NULL                               
-);
-
 CREATE TABLE c4ix (
     rowid       INTEGER PRIMARY KEY NOT NULL,
-    wellid      INTEGER,	                               
-    RELATEID    TEXT    NOT NULL,                          
-    COUNTY_C    INTEGER,                                   
-    UNIQUE_NO	TEXT,
+    wellid      INTEGER,
+    RELATEID    TEXT    NOT NULL,
+    COUNTY_C    INTEGER,
+    UNIQUE_NO    TEXT,
     WELLNAME    TEXT,
     TOWNSHIP    INTEGER,
     "RANGE"     INTEGER,
@@ -146,7 +49,7 @@ CREATE TABLE c4ix (
     CASE_DIAM   REAL,
     CASE_DEPTH  REAL,
     GROUT       CHAR,
-    POLLUT_DST  REAL,
+    POLLUT_DST  INTEGER,
     POLLUT_DIR  TEXT,
     POLLUT_TYP  TEXT,
     STRAT_DATE  INTEGER,
@@ -174,9 +77,103 @@ CREATE TABLE c4ix (
     UPDT_DATE   INTEGER
 );
 
+CREATE TABLE c4ad (
+    rowid      INTEGER PRIMARY KEY NOT NULL,
+    wellid     INTEGER,
+    RELATEID   TEXT    NOT NULL,
+    NAME       TEXT,
+    ADDTYPE_C  CHAR,
+    HOUSE_NO   TEXT,
+    STREET     TEXT,
+    ROAD_TYPE  TEXT,
+    ROAD_DIR   TEXT,
+    CITY       TEXT,
+    STATE      TEXT,
+    ZIPCODE    TEXT,
+    ENTRY_DATE INTEGER,
+    UPDT_DATE  INTEGER,
+    OTHER       TEXT
+);
+
+CREATE TABLE c4an (
+    rowid       INTEGER PRIMARY KEY NOT NULL,
+    wellid      INTEGER,
+    RELATEID    TEXT    NOT NULL,
+    C5AN_SEQ_NO REAL,
+    AZIMUTH        INTEGER,
+    INCLIN        INTEGER,
+    ANG_DEPTH    INTEGER
+);
+
+CREATE TABLE c4c1 (
+    rowid       INTEGER PRIMARY KEY NOT NULL,
+    wellid      INTEGER,
+    RELATEID    TEXT    NOT NULL,
+    DRILL_METH  CHAR,
+    DRILL_FLUD  CHAR,
+    HYDROFRAC   CHAR,
+    HFFROM      REAL,
+    HFTO        REAL,
+    CASE_MAT    CHAR,
+    CASE_JOINT  CHAR,
+    CASE_TOP    REAL,
+    DRIVE_SHOE  CHAR,
+    CASE_TYPE   CHAR,
+    SCREEN      CHAR,
+    OHTOPFEET   REAL,
+    OHBOTFEET   REAL,
+    SCREEN_MFG  TEXT,
+    SCREEN_TYP  CHAR,
+    PTLSS_MFG   TEXT,
+    PTLSS_MDL   TEXT,
+    BSMT_OFFST  CHAR,
+    CSG_TOP_OK  CHAR,
+    CSG_AT_GRD  CHAR,
+    PLSTC_PROT  CHAR,
+    DISINFECTD  CHAR,
+    PUMP_INST   CHAR,
+    PUMP_DATE   INTEGER,
+    PUMP_MFG    TEXT,
+    PUMP_MODEL  TEXT,
+    PUMP_HP     REAL,
+    PUMP_VOLTS  INTEGER,
+    DROPP_LEN   REAL,
+    DROPP_MAT   CHAR,
+    PUMP_CPCTY  REAL,
+    PUMP_TYPE   CHAR,
+    VARIANCE    CHAR,
+    DRLLR_NAME  TEXT,
+    ENTRY_DATE  INTEGER,
+    UPDT_DATE   INTEGER
+);
+
+CREATE TABLE c4c2 (
+    rowid       INTEGER PRIMARY KEY NOT NULL,
+    wellid      INTEGER,
+    RELATEID    TEXT    NOT NULL,
+    CONSTYPE    CHAR,
+    FROM_DEPTH  REAL,
+    TO_DEPTH    REAL,
+    DIAMETER    REAL,
+    SLOT        REAL,
+    LENGTH      REAL,
+    MATERIAL    CHAR,
+    AMOUNT      REAL,
+    UNITS       CHAR
+);
+
+CREATE TABLE c4id (
+    rowid       INTEGER PRIMARY KEY NOT NULL,
+    wellid      INTEGER,
+    RELATEID    TEXT    NOT NULL,
+    IDENTIFIER  TEXT    NOT NULL,
+    ID_TYPE     TEXT,
+    ID_PROG     TEXT
+);
+
 CREATE TABLE c4pl (
     rowid       INTEGER PRIMARY KEY NOT NULL,
-    wellid      INTEGER,	                               
+    wellid      INTEGER,
     RELATEID    TEXT    NOT NULL,
     PUMPTESTID  INTEGER,
     TEST_DATE   INTEGER,
@@ -188,7 +185,7 @@ CREATE TABLE c4pl (
 
 CREATE TABLE c4rm (
     rowid       INTEGER PRIMARY KEY NOT NULL,
-    wellid      INTEGER,	                               
+    wellid      INTEGER,
     RELATEID    TEXT    NOT NULL,
     SEQ_NO      INTEGER,
     REMARKS     TEXT
@@ -196,7 +193,7 @@ CREATE TABLE c4rm (
 
 CREATE TABLE c4st (
     rowid       INTEGER PRIMARY KEY NOT NULL,
-    wellid      INTEGER,	                               
+    wellid      INTEGER,
     RELATEID    TEXT    NOT NULL,
     DEPTH_TOP   REAL,
     DEPTH_BOT   REAL,
@@ -211,7 +208,7 @@ CREATE TABLE c4st (
 
 CREATE TABLE c4wl (
     rowid       INTEGER PRIMARY KEY NOT NULL,
-    wellid      INTEGER,	                               
+    wellid      INTEGER,
     RELATEID    TEXT    NOT NULL,
     MEAS_TYPE   TEXT,
     MEAS_DATE   INTEGER,
@@ -226,18 +223,18 @@ CREATE TABLE c4wl (
     UPDT_DATE   INTEGER
 );
 
-CREATE TABLE c4locs (                                      
+CREATE TABLE c4locs (
     rowid       INTEGER PRIMARY KEY NOT NULL,
-    wellid      INTEGER,	             					
-    CWI_loc     TEXT,                    					
+    wellid      INTEGER,
+    CWI_loc     TEXT,                                        
     RELATEID    TEXT,
-    COUNTY_C    TEXT,
+    COUNTY_C    INTEGER,
     UNIQUE_NO   TEXT,
     WELLNAME    TEXT,
-    TOWNSHIP    REAL,
-    "RANGE"     REAL,
+    TOWNSHIP    INTEGER,
+    "RANGE"     INTEGER,
     RANGE_DIR   TEXT,
-    SECTION     REAL,
+    SECTION     INTEGER,
     SUBSECTION  TEXT,
     MGSQUAD_C   TEXT,
     ELEVATION   REAL,
@@ -249,15 +246,15 @@ CREATE TABLE c4locs (
     DATA_SRC    TEXT,
     DEPTH_DRLL  REAL,
     DEPTH_COMP  REAL,
-    DATE_DRLL   REAL,
+    DATE_DRLL   INTEGER,
     CASE_DIAM   REAL,
     CASE_DEPTH  REAL,
     GROUT       TEXT,
-    POLLUT_DST  REAL,
+    POLLUT_DST  INTEGER,
     POLLUT_DIR  TEXT,
     POLLUT_TYP  TEXT,
-    STRAT_DATE  REAL,
-    STRAT_UPD   REAL,
+    STRAT_DATE  INTEGER,
+    STRAT_UPD   INTEGER,
     STRAT_SRC   TEXT,
     STRAT_GEOL  TEXT,
     STRAT_MC    TEXT,
@@ -277,25 +274,23 @@ CREATE TABLE c4locs (
     DH_VIDEO    TEXT,
     INPUT_SRC   TEXT,
     UNUSED      TEXT,
-    ENTRY_DATE  REAL,
-    UPDT_DATE   REAL,
+    ENTRY_DATE  INTEGER,
+    UPDT_DATE   INTEGER,
     GEOC_TYPE   TEXT,
     GCM_CODE    TEXT,
     GEOC_SRC    TEXT,
     GEOC_PRG    TEXT,
     UTME        REAL,
     UTMN        REAL,
-    GEOC_ENTRY  REAL,
-    GEOC_DATE   REAL,
-    GEOCUPD_EN  REAL,
-    GEOCUPD_DA  REAL,
-    RCVD_DATE   REAL,
+    GEOC_ENTRY  INTEGER,
+    GEOC_DATE   INTEGER,
+    GEOCUPD_EN  INTEGER,
+    GEOCUPD_DA  INTEGER,
+    RCVD_DATE   INTEGER,
     WELL_LABEL  TEXT,
-    SWLCOUNT    REAL,
-    SWLDATE     REAL,
+    SWLCOUNT    INTEGER,
+    SWLDATE     INTEGER,
     SWLAVGMEAS  REAL,
     SWLAVGELEV  REAL
 );
-
-
 

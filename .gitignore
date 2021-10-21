@@ -5,5 +5,7 @@
 **.mdb
 **.sqlite
 src/MNcwi_logins.py
+scratch/**
+bak/**
 .project
 .pydevproject

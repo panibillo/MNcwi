@@ -1,8 +1,8 @@
-/* CWI SCHEMA 
+/* CWI SCHEMA
 
-Version:    c4.4.0    
+Version:    c4.4.0
 Date:       2021-02-19
-Author:     William Olsen   
+Author:     William Olsen
 
 These are statements for populating the c4id table with identifiers contained
 only in the c4ix or c4locs tables in the MGS version of c4.
@@ -23,13 +23,13 @@ c4.4.0 version:
         + Add Views on c4id to simplify using Unique Well Numbers for search
           and for export.
         + Data, as cloned from cwi, may not pass all integrity checks.
-        
+  
 References:
 
 sql/cwischema_c4_versions.txt
 
-County Well Index, 2021, Database created and maintained by the Minnesota 
-Geological Survey, a department of the University of Minnesota,  with the 
+County Well Index, 2021, Database created and maintained by the Minnesota
+Geological Survey, a department of the University of Minnesota,  with the
 assistance of the Minnesota Department of Health.
 
 https://www.sqlite.org
@@ -45,9 +45,9 @@ Insert into c4id (wellid, RELATEID, IDENTIFIER, ID_TYPE, ID_PROG, is_MNU, is_pMN
     from c4ix
 ;
 
-Insert into c4id (wellid, RELATEID, IDENTIFIER, ID_TYPE, 
+Insert into c4id (wellid, RELATEID, IDENTIFIER, ID_TYPE,
             ID_PROG, is_MNU, is_pMNU)
-    select L.wellid, L.RELATEID, L.UNIQUE_NO, L.CWI_loc, 
+    select L.wellid, L.RELATEID, L.UNIQUE_NO, L.CWI_loc,
             'MNUNIQ', 1, 1
     from c4locs L
     left join c4ix X
