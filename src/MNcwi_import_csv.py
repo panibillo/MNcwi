@@ -177,10 +177,7 @@ class cwi_csvupdate():
         
         Arguments:
             db     : an open database instance
-            tables : either None, or a string containing 'data' and/or 'locs' 
-            check_new_data_exists : boolean
-                 - True:  only delete the sqlite data if new sorce files exists 
-                 - False: delete the sqlite data  
+            tables : either None, or a string including 'data' and/or 'locs' 
         """
         dodata = tables is None or 'data' in tables
         dolocs = tables is None or 'locs' in tables
@@ -204,7 +201,7 @@ class cwi_csvupdate():
         db.commit_db()
         db.vacuum()
                  
-    def import_data_from_csv(self, db, schema_has_constraints):    
+    def import_data_from_csv(self, db, schema_has_constraints, table_names=None):    
         """ 
         Create c4 tables in an sqlite db, and read in data from csv files
  
@@ -224,12 +221,13 @@ class cwi_csvupdate():
                  column, so the row generator must supply the wellid at the 
                  time that a record is created.
         """
-         
-        table_names = self.data_table_names 
         
-        defined_tables = db.get_tablenames()
+        if table_names is None: 
+            table_names = self.data_table_names 
+        
+        existing_tables = db.get_tablenames()
         for tablename in table_names:
-            assert tablename in defined_tables, f'{tablename} missing'
+            assert tablename in existing_tables, f'{tablename} missing from db'
             print (f'OK {tablename}')
             
             csvname = os.path.join(self.cwidatacsvdir, f'{tablename}.csv')
@@ -253,7 +251,20 @@ class cwi_csvupdate():
             print ('begin: ',insert)
             db.cur.executemany(insert, csvgen(csvname, col_names, col_convert))
             print (f"Completed table {tablename}") 
-             
+    
+    def import_locs_from_csv(self, db, schema_has_constraints):
+        """
+        If locs is supplied as a csv file rather than shapefile(s), then read it
+        in like the other data tables.
+        """
+        csvname = os.path.join(self.cwidatacsvdir, 'c4locs.csv') 
+        if os.path.exists(csvname):
+            self.import_data_from_csv( db, schema_has_constraints, 
+                                       table_names=('c4locs',) )
+            print (f"c4locs table was imported from csv file: {csvname}")
+            return True
+        return False
+        
     def import_cwi_locs(self, db):
         """
         Import the shapefiles into table c4locs. 
@@ -408,7 +419,8 @@ def RUN_import_csv(data=True,
  
         if locs and C.MNcwi_SCHEMA_HAS_LOCS: 
             C4.delete_table_data(db,'locs')
-            C4.import_cwi_locs(db)
+            if not C4.import_locs_from_csv(db, C.MNcwi_SCHEMA_HAS_FKwellid_CONSTRAINTS):
+                C4.import_cwi_locs(db)
             db.commit_db()
  
         if C.MNcwi_SCHEMA_HAS_WELLID: # and not C.MNcwi_SCHEMA_HAS_FKwellid_CONSTRAINTS:
@@ -433,10 +445,9 @@ def RUN_import_csv(data=True,
             
         if C.MNcwi_SCHEMA_HAS_FKwellid_CONSTRAINTS:
             db.query('PRAGMA foreign_keys = True')
- 
+
 if __name__ == '__main__':
     RUN_import_csv()
- 
     
     print ('\n',r'\\\\\\\\\\\\\\\\\\ DONE //////////////////')    
         

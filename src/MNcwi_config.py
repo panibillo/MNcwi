@@ -16,6 +16,7 @@ To import this file, write:
 
 MNcwi_SCHEMA_IDENTIFIER_MODEL = 'CWI'
 MNcwi_MNU_INSERT = None
+MNcwi_DATA_TABLE_PREFIX = 'c4'
 
 if   0:
     # Clone of cwi data files with no modifications

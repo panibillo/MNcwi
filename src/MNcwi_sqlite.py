@@ -14,7 +14,8 @@ Methods
     c4db.queryone()
     c4db.get_tablenames()
     c4db.get_viewnames()
-    c4db.get_field_descriptor_dict()
+    c4db.get_column_names()
+    c4db.get_column_type_dict()
 
 Only the c4** data tables are implemented here.
 
@@ -24,8 +25,12 @@ Ideas:
     Add a wellid table along lines of d1id, or modify c1id like d1id.
 
 '''
+import csv
+import os
 import sqlite3 as sqlite
 from collections import OrderedDict
+
+# from MNcwi_config import MNcwi_DATA_TABLE_PREFIX
 
 def showprogress(n, b=10):
     """
@@ -181,7 +186,7 @@ class DB_SQLite(DB_context_manager):
             self.cur = self.con.cursor()
             self.connection_open = True
         except:
-            print ("db_sqlite/db_open: ERROR - could not open ",self.db_name)
+            print (f"db_sqlite/db_open: ERROR - could not open database: {self.db_name}.")
             self.connection_open = False
         return self.connection_open
         
@@ -271,16 +276,65 @@ class DB_SQLite(DB_context_manager):
         data = self.cur.execute("select name from sqlite_master where type='view'").fetchall()
         return tuple(row[0] for row in data)
 
-    def get_field_descriptor_dict (self, table_name):
-        """ Return a dictionary of {field_name: field_type} for table_name."""
+    def get_column_names(self, table_name):
+        """ Return a list of field_names table_name."""
+        data = self.cur.execute(f'PRAGMA TABLE_INFO({table_name})').fetchall()
+        return [str(f[1]) for f in data]
+
+    def get_column_type_dict (self, table_name):
+        """ 
+        Return a dictionary of {field_name: field_type} for table_name.
+        """
         data = self.cur.execute(f'PRAGMA TABLE_INFO({table_name})').fetchall()
         return OrderedDict({str(f[1]) : str(f[2]) for f in data})
+
+    def export_table_to_csv(self, table_name, csv_name, where=''):   
+        """      
+        Export [selected] records from table tablename to a csv file.
+        
+        Arguments
+        ---------
+        tablename : string. Name of a table in the database
+        csv_name  : string. Filename of the csv file (with path)
+        where     : string, Optional. Where clause. If where is empty then all
+                    records are exported.   E.g.  where="where wellid = 123"
+        
+        Notes
+        -----
+        -   The csv file must not exist. If it already exists, simply abort.
+        -   All columns are written in native order except rowid.
+        -   The csv dialect is 'excel' with all non-numeric values quoted.
+        """
+        
+        cols = self.get_column_names(table_name)
+        if 'rowid' in cols:
+            cols.remove('rowid')
+        s = f"""select {', '.join(cols)} 
+                from {table_name} {where} 
+                order by wellid;""".replace('                ',' ')
+        
+        if os.path.exists(csv_name):
+            raise NotImplementedError(
+                'Overwriting existing csv files is not allowed: '+csv_name)
+            return False
+        with open(csv_name, 'w', newline='') as csvfile:
+            w = csv.writer(csvfile, 
+                           dialect='excel',
+                           quoting=csv.QUOTE_NONNUMERIC)
+            w.writerow(cols)
+            for row in self.query(s):
+                w.writerow(row)
+        print (f"{table_name} written to {csv_name}")
 
 class c4db(DB_SQLite): 
     def __init__(self, db_name=None, 
                        open_db=False, 
                        commit=False):
+        
         DB_SQLite.__init__(self, db_name, open_db=open_db, commit=commit)
+        
+#         datatables = 'ix ad an c1 c2 id pl rm st wl locs'.split()
+#         self.datatables = [f"{MNcwi_DATA_TABLE_PREFIX}{t}" for t in datatables]
 
     def __str__(self):
         rv=(f"c4db() a SQLite implementation of County Well Index",
@@ -317,7 +371,6 @@ class c4db(DB_SQLite):
             print ('update_unique_no_from_wellid():\n  ', e)
             return False 
 
-        
      
 #     def set_triggers_enabled(self, enable):
 #         assert isinstance(enable, bool)
