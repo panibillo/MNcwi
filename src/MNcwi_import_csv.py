@@ -20,8 +20,13 @@ def safefloat(x):
     try:    return float(x)
     except: return None
 def safetext(x):
-    try:    return x.strip()
-    except: return None
+    try:   
+        rv = x.strip()
+        if not rv:
+            return None
+        return rv
+    except: 
+        return None
 
 def get_col_names_and_converters(db, table_name, csv_cols):
     """ 
@@ -391,8 +396,6 @@ def RUN_import_csv(data=True,
     from MNcwi_sqlite import c4db 
     import MNcwi_config as C
        
-#     if C.MNcwi_SCHEMA_HAS_FKwellid_CONSTRAINTS:
-#         raise NotImplementedError('wellid constraint schemas not implemented')
     if C.MNcwi_SCHEMA_HAS_DATA_CONSTRAINTS:
         print('Warning. The CWI data files do not pass UNIQUE constaints')
         raise NotImplementedError('Data constraints models are not implemented')

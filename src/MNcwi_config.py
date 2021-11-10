@@ -39,7 +39,7 @@ elif 1:
     MNcwi_DB_SCHEMA  = "../sql/cwischema_c4.3.0.sql"
     MNcwi_DB_NAME    = "../db/MNcwi30.sqlite"
 elif 0:
-    # Iteration 0 of new identifier model: omit Unique constraints
+    # Iteration 0 of MNU identifier model: omit Unique constraints
     MNcwi_DB_VERSION = "c4.4.0"
     MNcwi_SCHEMA_IDENTIFIER_MODEL = 'MNU'
     MNcwi_DB_SCHEMA  = "../sql/cwischema_c4.4.0.sql"
@@ -47,7 +47,7 @@ elif 0:
     MNcwi_DB_NAME    = "../db/MNcwi40.sqlite"
 
 elif 0:
-    # Iteration 1 of new identifier model: Has Unique constraints
+    # Iteration 1 of MNU identifier model: Has Unique constraints
     MNcwi_DB_VERSION = "c4.4.1"
     MNcwi_SCHEMA_IDENTIFIER_MODEL = 'MNU'
     MNcwi_DB_SCHEMA  = "../sql/cwischema_c4.4.1.sql"

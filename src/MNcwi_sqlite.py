@@ -5,9 +5,37 @@ Created on Sep 12, 2020
 
 A cwi clone database in sqlite.
 
+Two service functions are included:
+
+-   showprogress() : a semi-graphical progress indicator.
+-   qmarks() : generate a string of "?" characters for use in queries.
+
+Class c4db implements only variables and methods that are agnostic as to
+the database schema and database engine.  
+
+Class c4db inherits from class DB_SQLite.
+DB_SQLite holds SQLite dependent methods, and inherits the context manager 
+mixin class DB_context_manager.
+
+Class DB_context_manager is a mixin class: 
+    it adds functionality to a class that inherits it, 
+    it has no __init__, and 
+    it depends on some methods to be implemented by a class that inherits it. 
+
+    Syntax options for the context manager:
+        with c4db(db_name) as db:  
+        with c4db(db_name, commit=True):
+        with c4db(db_name, open_db=False):
+    
+    Defaults argument values: 
+        open_db=True.  Explicitly call db.open_db() to open the connection
+        commit=False.  Prohibit commits
+        
+
 Methods
 -------
-    with c4db() as db     [a context manager]
+    with c4db() as db:     [context manager syntax]
+
     showprogress()
     qmarks() or c4db.qmarks()
     c4db.query()
@@ -16,13 +44,6 @@ Methods
     c4db.get_viewnames()
     c4db.get_column_names()
     c4db.get_column_type_dict()
-
-Only the c4** data tables are implemented here.
-
-          
-Ideas:
-    Add a wellid field (int)
-    Add a wellid table along lines of d1id, or modify c1id like d1id.
 
 '''
 import csv
@@ -319,8 +340,8 @@ class DB_SQLite(DB_context_manager):
             return False
         with open(csv_name, 'w', newline='') as csvfile:
             w = csv.writer(csvfile, 
-                           dialect='excel',
-                           quoting=csv.QUOTE_NONNUMERIC)
+                            dialect='excel')
+#                            quoting=csv.QUOTE_NONNUMERIC)
             w.writerow(cols)
             for row in self.query(s):
                 w.writerow(row)

@@ -97,9 +97,6 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 ## Acknowledgments
 
 The CWI database and the MWI website have been developed and maintained by many remarkable people who are remarkably dedicated to preserving and sharing well data in Minnesota.  These are maintained primarily by the Minnesota Geologic Survey and the Minnesota Department of Health, and with the help of numerous others. 
-
-[MWI map interface](https://mnwellindex.web.health.state.mn.us/)
-
-[MWI text search](https://mnwellindex.web.health.state.mn.us/mwi/)
-
-[CWI documentation](http://mgsweb2.mngs.umn.edu/cwi_doc/cwidoc.htm)
+* MWI map interface  https://mnwellindex.web.health.state.mn.us/
+* MWI text search  https://mnwellindex.web.health.state.mn.us/mwi/
+* CWI documentation  http://mgsweb2.mngs.umn.edu/cwi_doc/cwidoc.htm
