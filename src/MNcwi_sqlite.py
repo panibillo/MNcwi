@@ -179,11 +179,12 @@ class DB_context_manager():
 
 class DB_SQLite(DB_context_manager):
         
-    def __init__(self, db_name=None, open_db=False, commit=False):
+    def __init__(self, db_name=None, open_db=False, commit=False, converttypes=True):
         self.db_name = db_name
         self.qmarks = qmarks
+        self.converttypes = converttypes  
         if open_db: 
-            self.connection_open = self.open_db()
+            self.connection_open = self.open_db(converttypes=converttypes)
         else: 
             self.connection_open = False
         super().__init__(commit)
@@ -202,7 +203,19 @@ class DB_SQLite(DB_context_manager):
         return rv
 
     def open_db(self):
+        """
+        Open a connection to the db.
+        
+        https://pynative.com/python-sqlite-date-and-datetime/
+        """
         try:
+            if self.converttypes:
+                self.con = sqlite.connect(self.db_name,
+                                          detect_types=sqlite.PARSE_DECLTYPES |
+                                                       sqlite.PARSE_COLNAMES)
+            else:
+                self.con = sqlite.connect(self.db_name)
+ 
             self.con = sqlite.connect(self.db_name)
             self.cur = self.con.cursor()
             self.connection_open = True
