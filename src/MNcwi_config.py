@@ -77,7 +77,15 @@ MNcwi_DOWNLOAD_DB_NAME = f"R:/cwi/cwi{MNcwi_SCHEMA_VERSION}{MNcwi_SCHEMA_MINOR_V
 MNcwi_DIR = "../db"
 MNcwi_DOWNLOAD_LOGFILE = "../db/MN_cwi_download.log"
 
-
+if   1:
+    # Clone of SWUDS download file, with only addition of id cols & Unique_no.
+    MNcwi_SWUDS_VERSION = "r1.1.0"
+    MNcwi_SWUDS_SCHEMA  = "../sql/swudsschema_r1.1.0.sql"
+    MNcwi_SWUDS_TABLEAP = 'r1ap_full'
+elif 0:
+    # Convert SWUDS download file to relational database form, with code tables.
+    MNcwi_SWUDS_VERSION = "r1.2.0"
+    MNcwi_SWUDS_SCHEMA  = "../sql/swudsschema_r1.2.0.sql"
 
 if __name__ == '__main__':
     import os

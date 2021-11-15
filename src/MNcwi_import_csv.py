@@ -4,6 +4,7 @@ Created on Oct 10, 2020
 @author: Bill
 '''
 import csv
+import datetime
 import os
 import  shapefile
 
@@ -27,6 +28,31 @@ def safetext(x):
         return rv
     except: 
         return None
+class safedate():
+    def __init__(self, default='%m/%d/%Y'):
+        self.fmt = default
+        self.fmts = ( default,
+                     '%m-%d-%Y',
+                     '%Y/%m/%d',
+                     '%Y-%m-%d',
+                     '%Y%m%d')
+    def date(self, x):
+        """
+        Try to convert string x to a date using format self.fmt
+        If that fails, try the other formats in self.fmts. If one succeeds,
+        store the successful format in self.fmt for use on the next call.
+        """
+        try:
+            return datetime.datetime.strptime(x,self.fmt).date()
+        except:
+            for fmt in self.fmts:
+                try:
+                    d=datetime.datetime.strptime(x,fmt).date()
+                    self.fmt = fmt
+                    return d
+                except:
+                    pass
+        return None
 
 def get_col_names_and_converters(db, table_name, csv_cols):
     """ 
@@ -42,6 +68,7 @@ def get_col_names_and_converters(db, table_name, csv_cols):
     ucol_types = [c[2].upper() for c in data]
     ucsv_cols = [c.upper() for c in csv_cols]
     col_names, dcol_func = [], {}
+
     for N,T in zip(utbl_cols, ucol_types):
         if not N in ucsv_cols:
             continue
@@ -55,10 +82,11 @@ def get_col_names_and_converters(db, table_name, csv_cols):
             dcol_func[n] = safetext
         elif T == 'CHAR':
             dcol_func[n] = safetext
+        elif T == 'DATE':
+            dcol_func[n] = safedate().date
         else:
             raise NotImplementedError(f'type {T} is not implemented for table {table_name} in column {n}')
     return col_names, dcol_func
-
 
 def csv_generator(csvname, col_names, colfunc):
     """ 
@@ -80,7 +108,7 @@ def csv_generator(csvname, col_names, colfunc):
         for line in reader:
             yield tuple(colfunc[col](line[col]) for col in col_names)
 
-def csv_wellid_generator(csvname, col_names, colfunc):
+def csv_wellid_generator(csvname, col_names, colfunc, MNUcol='RELATEID'):
     """ 
     Yield next line from csv file as a tuple of type converted values
     
@@ -94,11 +122,12 @@ def csv_wellid_generator(csvname, col_names, colfunc):
     -   The yielded values are type converted using functions in colfunc.
     -   Both col_names and the keys used in col_func must match csv header  
         entries exactly, including case.
+    -   Sets wellid to Null if the MNUcol cannot be converted to an integer. 
     """
     with open(csvname, 'r') as datafile:
         reader = csv.DictReader(datafile)
         for line in reader:
-            wellid = int(line['RELATEID'])
+            wellid = safeint(line[MNUcol])
             yield tuple([wellid]+[colfunc[col](line[col]) for col in col_names])
          
 def shp_locs_generator(shpname):
@@ -148,7 +177,7 @@ class cwi_csvupdate():
         Read sql statments from an sql file.
         Returns a list of the statements in the order read.
         """
-        assert os.path.exists(schemafile), schemafile
+        assert os.path.exists(schemafile), os.path.abspath(schemafile)
         with open(schemafile) as f:
             ftxt = f.read()    
         
@@ -231,32 +260,58 @@ class cwi_csvupdate():
             table_names = self.data_table_names 
         
         existing_tables = db.get_tablenames()
-        for tablename in table_names:
-            assert tablename in existing_tables, f'{tablename} missing from db'
-            print (f'OK {tablename}')
+        for table_name in table_names:
+            assert table_name in existing_tables, f'{table_name} missing from db'
+            print (f'OK {table_name}')
             
-            csvname = os.path.join(self.cwidatacsvdir, f'{tablename}.csv')
+            csvname = os.path.join(self.cwidatacsvdir, f'{table_name}.csv')
             assert os.path.exists(csvname), csvname
             with open(csvname, 'r') as f:
                 headers = f.readline()
             csv_cols = headers.replace('"',' ').replace(',',' ').split()
          
-            col_names, col_convert = get_col_names_and_converters(db, tablename, csv_cols)
+            col_names, col_convert = get_col_names_and_converters(db, table_name, csv_cols)
             
             if schema_has_constraints and not 'WELLID' in headers.upper():
-                insert = (f"INSERT INTO {tablename}\n"
+                insert = (f"INSERT INTO {table_name}\n"
                           f" (wellid, {', '.join(col_names)})\n"
                           f" VALUES ({db.qmarks( len(col_names) + 1 )});")
                 csvgen = csv_wellid_generator
             else:
-                insert = (f"INSERT INTO {tablename}\n"
+                insert = (f"INSERT INTO {table_name}\n"
                           f" ({', '.join(col_names)})\n"
                           f" VALUES ({db.qmarks(col_names)});")
                 csvgen = csv_generator
             print ('begin: ',insert)
             db.cur.executemany(insert, csvgen(csvname, col_names, col_convert))
-            print (f"Completed table {tablename}") 
+            print (f"Completed table {table_name}") 
     
+    def import_swuds_full(self, db, csvname, table_name='r1ap_full'):
+        """
+        Import the swuds csv file into r1ap without modification.
+        """
+        existing_tables = db.get_tablenames()
+        assert table_name in existing_tables,  f'{table_name} missing from db'
+
+        assert os.path.exists(csvname), csvname
+        with open(csvname, 'r') as f:
+            headers = f.readline()
+        csv_cols = headers.replace('"',' ').replace(',',' ').split()
+
+        col_names, col_convert = get_col_names_and_converters(db, table_name, csv_cols)
+        insert = (f"INSERT INTO {table_name}\n"
+                  f" (wellid, {', '.join(col_names)})\n"
+                  f" VALUES ({db.qmarks( len(col_names)+1 )});")
+        
+        db.cur.executemany(insert, csv_wellid_generator(csvname, col_names, col_convert, MNUcol = 'well_number'))
+        print (f"Completed importing table {table_name}") 
+        
+        for u in ('update r1ap_full set unique_no = well_number;',
+                  'update r1ap_full set apid = rowid;' 
+                  ):
+            db.query(u)
+        print (f"Completed updating table {table_name}") 
+
     def import_locs_from_csv(self, db, schema_has_constraints):
         """
         If locs is supplied as a csv file rather than shapefile(s), then read it
@@ -313,10 +368,11 @@ class cwi_csvupdate():
         tables. These records are identified because they have wellid values 
         missing from c4ix. 
         
-        These records must be appended to c4ix in order to meet the Foreign Key 
-        constraint (c4locs.wellid references c4ix.wellid).  Information from 
-        these records is not added o other c4 data tables, even if the 
-        information is present.
+        These records must be appended to c4ix in order to meet Foreign Key
+        constraints on wellid (c4locs.wellid references c4ix.wellid).
+
+        No effort is made to add information from the new c4locs records to
+        any c4 data tables other than c4ix.
         """
         print ('Appending Recent records in c4locs to c4ix')
         i = """Insert into c4ix (
@@ -372,7 +428,26 @@ class cwi_csvupdate():
             db.query(s.format(tablename=tablename))
         print (f"Completed updating wellid in table {tablename}")
 
+def RUN_import_swuds(create=False):
+    from MNcwi_sqlite import c4db
+    import MNcwi_config as C
 
+    if 1:
+        # Production
+        csvname = 'R:/mpars_index_permits_installations.csv'
+        db_name = C.MNcwi_DB_NAME
+    elif 0:
+        # Testing
+        csvname = r'F:\Bill\Workspaces\Py1\MNcwisqlite\demo_data\mpars_demo.csv'
+        db_name = r'F:\Bill\Documents\GW\CWI\c4db.sqlite'
+
+    C4 = cwi_csvupdate( C.MNcwi_DIR,  # args not used, but must be extant paths.
+                        C.MNcwi_DIR)
+    with c4db(db_name=db_name, commit=True) as db:
+        if create:
+            C4.execute_statements_from_file(db, C.MNcwi_SWUDS_SCHEMA)
+        C4.import_swuds_full(db, csvname)
+        
 def RUN_import_csv(data=True, 
                    locs=True):
     """ 
@@ -450,7 +525,8 @@ def RUN_import_csv(data=True,
             db.query('PRAGMA foreign_keys = True')
 
 if __name__ == '__main__':
-    RUN_import_csv()
+    #RUN_import_csv()
+    RUN_import_swuds(create=True)
     
     print ('\n',r'\\\\\\\\\\\\\\\\\\ DONE //////////////////')    
         
