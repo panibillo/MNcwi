@@ -18,42 +18,50 @@ MNcwi_SCHEMA_IDENTIFIER_MODEL = 'CWI'
 MNcwi_MNU_INSERT = None
 MNcwi_DATA_TABLE_PREFIX = 'c4'
 
-if   0:
-    # Clone of cwi data files with no modifications
+# choose the schema version.
+MNcwi_SCHEMA_VERSION = 4
+
+if MNcwi_SCHEMA_VERSION == 0:
+    ### Clone of cwi data files with no modifications
     MNcwi_DB_VERSION = "c4.0.0"
     MNcwi_DB_SCHEMA  = "../sql/cwischema_c4.0.0.sql"
     MNcwi_DB_NAME    = "../db/MNcwi00.sqlite"
-elif 0:
-    # Add c4locs file
+
+elif MNcwi_SCHEMA_VERSION == 1:
+    ### Add c4locs file
     MNcwi_DB_VERSION = "c4.1.0"
     MNcwi_DB_SCHEMA  = "../sql/cwischema_c4.1.0.sql"
     MNcwi_DB_NAME    = "../db/MNcwi10.sqlite"
-elif 0:
-    # Add columns rowid and wellid to all tables
+
+elif MNcwi_SCHEMA_VERSION == 2:
+    ### Add columns rowid and wellid to all tables
     MNcwi_DB_VERSION = "c4.2.0"
     MNcwi_DB_SCHEMA  = "../sql/cwischema_c4.2.0.sql"
     MNcwi_DB_NAME    = "../db/MNcwi20.sqlite"
-elif 1:
-    # Add Foreign Key constraints on wellid to data tables 
+
+elif MNcwi_SCHEMA_VERSION == 3:
+    ### Add Foreign Key constraints on wellid to data tables
     MNcwi_DB_VERSION = "c4.3.0"
     MNcwi_DB_SCHEMA  = "../sql/cwischema_c4.3.0.sql"
     MNcwi_DB_NAME    = "../db/MNcwi30.sqlite"
-elif 0:
-    # Iteration 0 of MNU identifier model: omit Unique constraints
+
+elif MNcwi_SCHEMA_VERSION == 4:
+    ### Iteration 0 of MNU identifier model: omit Unique constraints
     MNcwi_DB_VERSION = "c4.4.0"
     MNcwi_SCHEMA_IDENTIFIER_MODEL = 'MNU'
     MNcwi_DB_SCHEMA  = "../sql/cwischema_c4.4.0.sql"
     MNcwi_MNU_INSERT = "../sql/mnu_insert_c4.4.0.sql"
     MNcwi_DB_NAME    = "../db/MNcwi40.sqlite"
 
-elif 0:
-    # Iteration 1 of MNU identifier model: Has Unique constraints
+elif MNcwi_SCHEMA_VERSION == 4.1:
+    ### Iteration 1 of MNU identifier model: Has Unique constraints
     MNcwi_DB_VERSION = "c4.4.1"
     MNcwi_SCHEMA_IDENTIFIER_MODEL = 'MNU'
     MNcwi_DB_SCHEMA  = "../sql/cwischema_c4.4.1.sql"
     MNcwi_MNU_INSERT = "../sql/mnu_insert_c4.4.1.sql"
     MNcwi_MNU_VIEWS = "../sql/mnu_views_c4.4.1.sql"
     MNcwi_DB_NAME    = "../db/MNcwi41.sqlite"
+
 
 MNcwi_SCHEMA_VERSION = int(MNcwi_DB_VERSION.split('.')[1])
 MNcwi_SCHEMA_MINOR_VERSION = int(MNcwi_DB_VERSION.split('.')[2])
@@ -71,11 +79,13 @@ MNcwi_DOWNLOAD_FILES = [
     #"cwi_info_csv.zip"
 ]
 MNcwi_DOWNLOAD_DIR = "R:/cwi"
-MNcwi_DOWNLOAD_CWIDATACSV_DIR = "R:/cwi/cwidata_csv"
-MNcwi_DOWNLOAD_DB_NAME = f"R:/cwi/cwi{MNcwi_SCHEMA_VERSION}{MNcwi_SCHEMA_MINOR_VERSION}.sqlite"
+MNcwi_DOWNLOAD_CWIDATACSV_DIR = f"{MNcwi_DOWNLOAD_DIR}/cwidata_csv"
+MNcwi_DOWNLOAD_DB_NAME = f"{MNcwi_DOWNLOAD_DIR}/cwi{MNcwi_SCHEMA_VERSION}{MNcwi_SCHEMA_MINOR_VERSION}.sqlite"
 
 MNcwi_DIR = "../db"
 MNcwi_DOWNLOAD_LOGFILE = "../db/MN_cwi_download.log"
+
+MNcwi_DOWNLOAD_APPROPRIATIONS_CSV = f"{MNcwi_DOWNLOAD_DIR}/mpars_index_permits_installations.csv"
 
 if   1:
     # Clone of SWUDS download file, with only addition of id cols & Unique_no.

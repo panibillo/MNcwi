@@ -288,6 +288,11 @@ class DB_SQLite(DB_context_manager):
     def queryone(self, sql, vals=None, default=None):
         """
         Execute a query and return first result tuple, or value.
+        
+        Returns
+        -------
+        If query returns multiple values per row: return first row as tuple.
+        If query returns a one value per row: return the value (not as tuple)
         """
         rv = self.query(sql, vals=vals, n=1)
         if len(rv)==1:

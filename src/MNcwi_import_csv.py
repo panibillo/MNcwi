@@ -165,7 +165,7 @@ class cwi_csvupdate():
                  locsdir):
         self.cwidatacsvdir = cwidatacsvdir
         self.locsdir = locsdir
-        self.data_table_suffixes = 'ix ad an c1 c2 id pl rm st wl'.split()
+        self.data_table_suffixes = 'ix id ad an c1 c2 pl rm st wl'.split()
         self.data_table_names = [f'c4{x}' for x in self.data_table_suffixes]
         self.locs_table_name = 'c4locs'
 
@@ -260,6 +260,7 @@ class cwi_csvupdate():
             table_names = self.data_table_names 
         
         existing_tables = db.get_tablenames()
+
         for table_name in table_names:
             assert table_name in existing_tables, f'{table_name} missing from db'
             print (f'OK {table_name}')
@@ -471,7 +472,7 @@ def RUN_import_csv(data=True,
     from MNcwi_sqlite import c4db 
     import MNcwi_config as C
        
-    if C.MNcwi_SCHEMA_HAS_DATA_CONSTRAINTS:
+    if 0 and C.MNcwi_SCHEMA_HAS_DATA_CONSTRAINTS:
         print('Warning. The CWI data files do not pass UNIQUE constaints')
         raise NotImplementedError('Data constraints models are not implemented')
 
@@ -525,7 +526,7 @@ def RUN_import_csv(data=True,
             db.query('PRAGMA foreign_keys = True')
 
 if __name__ == '__main__':
-    #RUN_import_csv()
+    RUN_import_csv()
     RUN_import_swuds(create=True)
     
     print ('\n',r'\\\\\\\\\\\\\\\\\\ DONE //////////////////')    

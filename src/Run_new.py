@@ -20,7 +20,8 @@ Version
 """
 
 from MNcwi_download_ftp import RUN_download_cwi
-from MNcwi_import_csv import RUN_import_csv
+from MNcwi_import_csv import RUN_import_csv, RUN_import_swuds
 
 RUN_download_cwi()
 RUN_import_csv()
+# RUN_import_swuds()
