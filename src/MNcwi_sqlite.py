@@ -184,7 +184,7 @@ class DB_SQLite(DB_context_manager):
         self.qmarks = qmarks
         self.converttypes = converttypes  
         if open_db: 
-            self.connection_open = self.open_db(converttypes=converttypes)
+            self.connection_open = self.open_db()
         else: 
             self.connection_open = False
         super().__init__(commit)
@@ -202,6 +202,48 @@ class DB_SQLite(DB_context_manager):
               f" commit={self._context_autocommit})")
         return rv
 
+    @staticmethod
+    def qmarks(vals):
+        return qmarks(vals)
+        # '''
+        # Return a string of comma separated questionmarks for vals
+        #
+        # Questionmark parameter markers are used in pysqlite execute methods to 
+        # prevent sql injection. See the pysqlite documentation.
+        #
+        # Arguments
+        # vals : iterable (list or tuple), integer, or string.
+        #        vals is interpreted to determine 'n' the number of '?' symbols 
+        #        required.  As follows:
+        #          iterable : n = len(vals)
+        #          string   : n=1.
+        #          int      : n = vals
+        # Examples
+        #     vals = 'Bill'         n=1, return '?'
+        #     vals = 4              n=4, return '?,?,?,?'
+        #     vals = [4]            n=1, return '?'
+        #     vals = (1,2,'Bill')   n=3, return '?,?,?'
+        #
+        # Notes: 
+        #     The interpretation of 'n' from vals is pretty intuitive when vals is an
+        # iterable or an integer.  But the interpretation of n from other argument 
+        # types would be arbitrary, and not intuitive for users.  Therefore Other 
+        # non-iterable types are left to throw an error when len() is called.  But 
+        # strings have a len() method, so are treated as a special case that is 
+        # intepreted as signifying a single val.
+        #     The qmarks method can be imported by itself, but is also made available
+        # as a method in class DB_SQLite.
+        # '''
+        # return qmarks(vals)
+        # # if isinstance(vals, str):
+        # #     return '?'
+        # # elif isinstance(vals, int):
+        # #     return ','.join(vals * ['?'])
+        # # else:
+        # #     return ','.join(len(vals) * ['?'])
+        # #
+
+    
     def open_db(self):
         """
         Open a connection to the db.
@@ -456,25 +498,25 @@ if __name__=='__main__':
         cur = con.cursor()
         print (type(con), con)
         print (type(cur))
-        con.create_function("trig_enabled", 0, triggers_on)
-        cur.execute("select trig_enabled()" )
-        print ('ON?', cur.fetchone()[0])
-        con.create_function("trig_enabled", 0, triggers_off)
-        cur.execute("select trig_enabled()" )
-        print ('OFF?', cur.fetchone()[0])
+        # con.create_function("trig_enabled", 0, triggers_on)
+        # cur.execute("select trig_enabled()" )
+        # print ('ON?', cur.fetchone()[0])
+        # con.create_function("trig_enabled", 0, triggers_off)
+        # cur.execute("select trig_enabled()" )
+        # print ('OFF?', cur.fetchone()[0])
 
         with c4db(db_name=DB_NAME, commit=True, open_db=True) as db:
             print (type(db.con), db.con)
             print (type(db.cur))
             print (db.connection_open)
             print (db.get_tablenames())
-            db.con.create_function("trig_enabled", 0, triggers_on)
-            db.con.create_function("trig_enabled", 0, triggers_on)
-            v = db.queryone("trig_enabled()")
-            print ('ON?',v)
-            db.con.create_function('triggers_enabled', 0, triggers_off)
-            v = db.queryone("triggers_enabled()")
-            print ('OFF?',v)
+            # db.con.create_function("trig_enabled", 0, triggers_on)
+            # db.con.create_function("trig_enabled", 0, triggers_on)
+            # v = db.queryone("trig_enabled()")
+            # print ('ON?',v)
+            # db.con.create_function('triggers_enabled', 0, triggers_off)
+            # v = db.queryone("triggers_enabled()")
+            # print ('OFF?',v)
         
     print ('\n',r'\\\\\\\\\\\\\\\\\\ DONE //////////////////')        
         

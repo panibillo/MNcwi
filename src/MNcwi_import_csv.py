@@ -7,6 +7,8 @@ import csv
 import datetime
 import os
 import  shapefile
+from distro import linux_distribution
+from pip._internal.vcs import git
 
 """ 
 Simple type checking, type converting, and text cleaning functions.
@@ -103,6 +105,7 @@ def csv_generator(csvname, col_names, colfunc):
     -   Both col_names and the keys used in col_func must match csv header  
         entries exactly, including case.
     """
+    # with open(csvname, 'r', encoding='ascii') as datafile:
     with open(csvname, 'r') as datafile:
         reader = csv.DictReader(datafile)
         for line in reader:
@@ -165,7 +168,11 @@ class cwi_csvupdate():
                  locsdir):
         self.cwidatacsvdir = cwidatacsvdir
         self.locsdir = locsdir
+#<<<<<<< Updated upstream
         self.data_table_suffixes = 'ix id ad an c1 c2 pl rm st wl'.split()
+# =======
+#         self.data_table_suffixes = 'ad ix an c1 c2 id pl rm st wl'.split()
+# >>>>>>> Stashed changes
         self.data_table_names = [f'c4{x}' for x in self.data_table_suffixes]
         self.locs_table_name = 'c4locs'
 
@@ -265,8 +272,20 @@ class cwi_csvupdate():
             assert table_name in existing_tables, f'{table_name} missing from db'
             print (f'OK {table_name}')
             
+# <<<<<<< Updated upstream
+#             csvname = os.path.join(self.cwidatacsvdir, f'{table_name}.csv')
+# =======
+            n = db.cur.execute(f"select count(*) from {table_name};").fetchone()[0]
+            if n>0:
+                print (f"skipping {table_name}, {n} records already in db.")
+                continue
+                        
             csvname = os.path.join(self.cwidatacsvdir, f'{table_name}.csv')
+# >>>>>>> Stashed changes
             assert os.path.exists(csvname), csvname
+
+            ok = self.force_to_ascii(csvname)
+            
             with open(csvname, 'r') as f:
                 headers = f.readline()
             csv_cols = headers.replace('"',' ').replace(',',' ').split()
@@ -429,6 +448,29 @@ class cwi_csvupdate():
             db.query(s.format(tablename=tablename))
         print (f"Completed updating wellid in table {tablename}")
 
+# <<<<<<< Updated upstream
+# =======
+    def force_to_ascii(self, fname):
+        """ 
+        Remove any non-ASCII characters from the csv files.
+        
+        This is a crude fix that deletes information.  But experience shows that the
+        only data affected in Dec 2021 was a single address with encoded '1/2' 
+        symbol.
+        """
+        # fsrc  = '/home/bill/R/cwi/cwidata_csv/c4ad_raw.csv'
+        # fdest = '/home/bill/R/cwi/cwidata_csv/c4ad.csv'
+        try:
+            with open(fname, 'rb') as source_file:
+                contents = source_file.read()
+            with open(fname, 'w+b') as dest_file:
+                dest_file.write(contents.decode('ascii','ignore').encode('ascii','ignore'))
+            return True
+        except Exception as e:
+            print (e)
+            return False
+        
+# >>>>>>> Stashed changes
 def RUN_import_swuds(create=False):
     from MNcwi_sqlite import c4db
     import MNcwi_config as C
@@ -484,36 +526,36 @@ def RUN_import_csv(data=True,
     print (f"Importing data to {C.MNcwi_DOWNLOAD_DB_NAME}")
     with c4db(db_name=C.MNcwi_DOWNLOAD_DB_NAME, commit=True) as db:
         
-        if create: 
-            print (f"creating tables, constraints, and views from {C.MNcwi_DB_SCHEMA}")
-            C4.execute_statements_from_file(db, C.MNcwi_DB_SCHEMA)
+        # if create: 
+        #     print (f"creating tables, constraints, and views from {C.MNcwi_DB_SCHEMA}")
+        #     C4.execute_statements_from_file(db, C.MNcwi_DB_SCHEMA)
  
         if C.MNcwi_SCHEMA_HAS_FKwellid_CONSTRAINTS:
             db.query('PRAGMA foreign_keys = False')
  
-        if data: 
-            C4.delete_table_data(db, 'data')
-            C4.import_data_from_csv( db, C.MNcwi_SCHEMA_HAS_FKwellid_CONSTRAINTS)
-            db.commit_db()
- 
-        if locs and C.MNcwi_SCHEMA_HAS_LOCS: 
-            C4.delete_table_data(db,'locs')
-            if not C4.import_locs_from_csv(db, C.MNcwi_SCHEMA_HAS_FKwellid_CONSTRAINTS):
-                C4.import_cwi_locs(db)
-            db.commit_db()
- 
-        if C.MNcwi_SCHEMA_HAS_WELLID: # and not C.MNcwi_SCHEMA_HAS_FKwellid_CONSTRAINTS:
-            C4.populate_wellid_and_index(db, C.MNcwi_SCHEMA_HAS_LOCS)
-            db.commit_db()
-             
- 
-        if C.MNcwi_REFORMAT_UNIQUE_NO:
-            if data:
-                db.update_unique_no_from_wellid('c4ix')
-                db.commit_db()
-            if locs and C.MNcwi_SCHEMA_HAS_LOCS:
-                db.update_unique_no_from_wellid('c4locs')
-                db.commit_db()
+        # if data: 
+        #     C4.delete_table_data(db, 'data')
+        #     C4.import_data_from_csv( db, C.MNcwi_SCHEMA_HAS_FKwellid_CONSTRAINTS)
+        #     db.commit_db()
+        #
+        # if locs and C.MNcwi_SCHEMA_HAS_LOCS: 
+        #     C4.delete_table_data(db,'locs')
+        #     if not C4.import_locs_from_csv(db, C.MNcwi_SCHEMA_HAS_FKwellid_CONSTRAINTS):
+        #         C4.import_cwi_locs(db)
+        #     db.commit_db()
+        #
+        # if C.MNcwi_SCHEMA_HAS_WELLID: # and not C.MNcwi_SCHEMA_HAS_FKwellid_CONSTRAINTS:
+        #     C4.populate_wellid_and_index(db, C.MNcwi_SCHEMA_HAS_LOCS)
+        #     db.commit_db()
+        #
+        #
+        # if C.MNcwi_REFORMAT_UNIQUE_NO:
+        #     if data:
+        #         db.update_unique_no_from_wellid('c4ix')
+        #         db.commit_db()
+        #     if locs and C.MNcwi_SCHEMA_HAS_LOCS:
+        #         db.update_unique_no_from_wellid('c4locs')
+        #         db.commit_db()
  
         if C.MNcwi_SCHEMA_IDENTIFIER_MODEL == 'MNU':
             C4.execute_statements_from_file(db, C.MNcwi_MNU_INSERT)
@@ -526,8 +568,16 @@ def RUN_import_csv(data=True,
             db.query('PRAGMA foreign_keys = True')
 
 if __name__ == '__main__':
+    #RUN_decode()
     RUN_import_csv()
-    RUN_import_swuds(create=True)
+    #RUN_import_swuds(create=True)
     
+    # TODO:
+    #     run the decode efficiently on all of the csv files - to be safe.
+    #     commit from Windows to git.
+    #     stash in linux
+    #     pull from git
+    #     merge.
+        
     print ('\n',r'\\\\\\\\\\\\\\\\\\ DONE //////////////////')    
         

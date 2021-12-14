@@ -85,7 +85,7 @@ https://www.sqlite.org
 */
 
 update c4id
-    set MNU = 0
+    set MNU = 0, pMNU = 0
 ;
 
 update c4id
@@ -313,7 +313,7 @@ left join c4id B
 where 
   A.wellid != B.wellid
   and A.identifier like('%W%'))
-order by identifier;
+;
 
 -- 2.3 insert rows in c7id_match -- 37 rows
 insert into c7id_match (wellid1, identifier1, wellid2, identifier2, mexplain, mplan, mresolved)

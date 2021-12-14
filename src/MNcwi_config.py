@@ -13,6 +13,7 @@ To import this file, write:
 
 @author: William Olsen
 '''
+import os, platform
 
 MNcwi_SCHEMA_IDENTIFIER_MODEL = 'CWI'
 MNcwi_MNU_INSERT = None
@@ -78,12 +79,22 @@ MNcwi_DOWNLOAD_FILES = [
     "xcwiunlocs.zip",
     #"cwi_info_csv.zip"
 ]
-MNcwi_DOWNLOAD_DIR = "R:/cwi"
-MNcwi_DOWNLOAD_CWIDATACSV_DIR = f"{MNcwi_DOWNLOAD_DIR}/cwidata_csv"
-MNcwi_DOWNLOAD_DB_NAME = f"{MNcwi_DOWNLOAD_DIR}/cwi{MNcwi_SCHEMA_VERSION}{MNcwi_SCHEMA_MINOR_VERSION}.sqlite"
+if platform.system() == 'Windows':
+    MNcwi_DOWNLOAD_DIR = "R:/cwi"
+    MNcwi_DOWNLOAD_CWIDATACSV_DIR = f"{MNcwi_DOWNLOAD_DIR}/cwidata_csv"
+    MNcwi_DOWNLOAD_DB_NAME = f"{MNcwi_DOWNLOAD_DIR}/cwi{MNcwi_SCHEMA_VERSION}{MNcwi_SCHEMA_MINOR_VERSION}.sqlite"
 
-MNcwi_DIR = "../db"
-MNcwi_DOWNLOAD_LOGFILE = "../db/MN_cwi_download.log"
+    MNcwi_DIR = "../db"
+    MNcwi_DOWNLOAD_LOGFILE = "../db/MN_cwi_download.log"
+    
+elif platform.system() == 'Linux':
+    MNcwi_DOWNLOAD_DIR = f"{os.path.expanduser('~')}/R/cwi"
+    MNcwi_DOWNLOAD_CWIDATACSV_DIR = f"{MNcwi_DOWNLOAD_DIR}/cwidata_csv"
+    MNcwi_DOWNLOAD_DB_NAME = f"{MNcwi_DOWNLOAD_DIR}/cwi{MNcwi_SCHEMA_VERSION}{MNcwi_SCHEMA_MINOR_VERSION}.sqlite"
+
+    MNcwi_DIR = f"{os.path.expanduser('~')}/data/MN/Ocwi"
+    MNcwi_DOWNLOAD_LOGFILE = f"{MNcwi_DIR}/Ocwi_download.log"
+
 
 MNcwi_DOWNLOAD_APPROPRIATIONS_CSV = f"{MNcwi_DOWNLOAD_DIR}/mpars_index_permits_installations.csv"
 
@@ -112,7 +123,7 @@ if __name__ == '__main__':
            f". (Exists = {os.path.exists(MNcwi_DB_NAME)})")
     print ("MNcwi_DOWNLOAD_FILES:")
     for f in MNcwi_DOWNLOAD_FILES:
-        print (f"   {f}")
+        print (f"   {f:<15} : Exists={os.path.exists(os.path.join(MNcwi_DOWNLOAD_CWIDATACSV_DIR, f))}" )
     assert os.path.exists(MNcwi_DB_SCHEMA), f"Missing MNcwi_DB_SCHEMA {MNcwi_DB_SCHEMA}"
     assert os.path.exists(MNcwi_DOWNLOAD_DIR), f"Missing MNcwi_DOWNLOAD_DIR {MNcwi_DOWNLOAD_DIR}"
     assert os.path.exists(MNcwi_DOWNLOAD_CWIDATACSV_DIR), f"Missing MNcwi_DOWNLOAD_CWIDATACSV_DIR {MNcwi_DOWNLOAD_CWIDATACSV_DIR}"

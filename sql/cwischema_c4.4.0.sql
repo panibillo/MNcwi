@@ -200,7 +200,11 @@ CREATE TABLE c4id (
     ID_TYPE     TEXT,
     ID_PROG     TEXT,
     MNU         INTEGER NOT NULL DEFAULT (0),
-    pMNU        INTEGER NOT NULL DEFAULT (0)
+    pMNU        INTEGER NOT NULL DEFAULT (0),
+    mexplain    TEXT,
+    mplan       TEXT,
+    mresolved   INTEGER,
+	mremark 	TEXT
 );
 
 CREATE TABLE c7id (
@@ -213,8 +217,9 @@ CREATE TABLE c7id (
     MNU         INTEGER NOT NULL DEFAULT (0),
     pMNU        INTEGER NOT NULL DEFAULT (0),
 	mexplain    TEXT,
-	meaction    TEXT,
-	mstatus     TEXT,
+	mplan       TEXT,
+	mresolved	INTEGER,
+	mremark 	TEXT
     CONSTRAINT fk_c7id_wellid
         FOREIGN KEY (wellid)
         REFERENCES c4ix (wellid)
@@ -259,7 +264,7 @@ create table c7id_match (
 	identifier2 TEXT,
 	mexplain    TEXT,
 	mplan       TEXT,
-	mcomplete	INTEGER,
+	mresolved	INTEGER,
 	mremark 	TEXT
 );
 
