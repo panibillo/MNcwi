@@ -168,11 +168,7 @@ class cwi_csvupdate():
                  locsdir):
         self.cwidatacsvdir = cwidatacsvdir
         self.locsdir = locsdir
-#<<<<<<< Updated upstream
         self.data_table_suffixes = 'ix id ad an c1 c2 pl rm st wl'.split()
-# =======
-#         self.data_table_suffixes = 'ad ix an c1 c2 id pl rm st wl'.split()
-# >>>>>>> Stashed changes
         self.data_table_names = [f'c4{x}' for x in self.data_table_suffixes]
         self.locs_table_name = 'c4locs'
 
@@ -272,16 +268,12 @@ class cwi_csvupdate():
             assert table_name in existing_tables, f'{table_name} missing from db'
             print (f'OK {table_name}')
             
-# <<<<<<< Updated upstream
-#             csvname = os.path.join(self.cwidatacsvdir, f'{table_name}.csv')
-# =======
             n = db.cur.execute(f"select count(*) from {table_name};").fetchone()[0]
             if n>0:
                 print (f"skipping {table_name}, {n} records already in db.")
                 continue
                         
             csvname = os.path.join(self.cwidatacsvdir, f'{table_name}.csv')
-# >>>>>>> Stashed changes
             assert os.path.exists(csvname), csvname
 
             ok = self.force_to_ascii(csvname)
@@ -448,8 +440,6 @@ class cwi_csvupdate():
             db.query(s.format(tablename=tablename))
         print (f"Completed updating wellid in table {tablename}")
 
-# <<<<<<< Updated upstream
-# =======
     def force_to_ascii(self, fname):
         """ 
         Remove any non-ASCII characters from the csv files.
@@ -470,25 +460,24 @@ class cwi_csvupdate():
             print (e)
             return False
         
-# >>>>>>> Stashed changes
 def RUN_import_swuds(create=False):
-    from MNcwi_sqlite import c4db
-    import MNcwi_config as C
+    from OWI_sqlite import c4db
+    import OWI_config as C
 
     if 1:
         # Production
         csvname = 'R:/mpars_index_permits_installations.csv'
-        db_name = C.MNcwi_DB_NAME
+        db_name = C.OWI_DB_NAME
     elif 0:
         # Testing
-        csvname = r'F:\Bill\Workspaces\Py1\MNcwisqlite\demo_data\mpars_demo.csv'
+        csvname = r'F:\Bill\Workspaces\Py1\OWIsqlite\demo_data\mpars_demo.csv'
         db_name = r'F:\Bill\Documents\GW\CWI\c4db.sqlite'
 
-    C4 = cwi_csvupdate( C.MNcwi_DIR,  # args not used, but must be extant paths.
-                        C.MNcwi_DIR)
+    C4 = cwi_csvupdate( C.OWI_DIR,  # args not used, but must be extant paths.
+                        C.OWI_DIR)
     with c4db(db_name=db_name, commit=True) as db:
         if create:
-            C4.execute_statements_from_file(db, C.MNcwi_SWUDS_SCHEMA)
+            C4.execute_statements_from_file(db, C.OWI_SWUDS_SCHEMA)
         C4.import_swuds_full(db, csvname)
         
 def RUN_import_csv(data=True, 
@@ -505,66 +494,74 @@ def RUN_import_csv(data=True,
                 
     Prerequisites
     -------------
-        - MNcwi_DOWNLOAD_DB_NAME        
+        - OWI_DOWNLOAD_DB_NAME        
             - must not exist or is completely empty of data tables.
-        - MNcwi_DB_SCHEMA               must exist: named schema file.
-        - MNcwi_DOWNLOAD_DIR            must exist: wells.shp and unloc_wells.shp 
-        - MNcwi_DOWNLOAD_CWIDATACSV_DIR must exist: cwidata .csv files
+        - OWI_DB_SCHEMA               must exist: named schema file.
+        - OWI_DOWNLOAD_DIR            must exist: wells.shp and unloc_wells.shp 
+        - OWI_DOWNLOAD_CWIDATACSV_DIR must exist: cwidata .csv files
+        
+    IMPORTANT!!!!!
+    --------------
+    -   If it runs incompletely or with errors, the final state may be faulty.
+    -   If it runs incompletely or with errors, you can try to comment out
+        sections that have been complete in order to only run the incomplete
+        portions. The logic is intended to let the user programmatically control 
+        which parts to run, but that is not yet well written.
     """
-    from MNcwi_sqlite import c4db 
-    import MNcwi_config as C
+    from OWI_sqlite import c4db 
+    import OWI_config as C
        
-    if 0 and C.MNcwi_SCHEMA_HAS_DATA_CONSTRAINTS:
+    if 0 and C.OWI_SCHEMA_HAS_DATA_CONSTRAINTS:
         print('Warning. The CWI data files do not pass UNIQUE constaints')
         raise NotImplementedError('Data constraints models are not implemented')
 
-    C4 = cwi_csvupdate( C.MNcwi_DOWNLOAD_CWIDATACSV_DIR,
-                        C.MNcwi_DOWNLOAD_DIR)
+    C4 = cwi_csvupdate( C.OWI_DOWNLOAD_CWIDATACSV_DIR,
+                        C.OWI_DOWNLOAD_DIR)
     
-    create = not os.path.exists(C.MNcwi_DOWNLOAD_DB_NAME)
+    create = not os.path.exists(C.OWI_DOWNLOAD_DB_NAME)
     
-    print (f"Importing data to {C.MNcwi_DOWNLOAD_DB_NAME}")
-    with c4db(db_name=C.MNcwi_DOWNLOAD_DB_NAME, commit=True) as db:
+    print (f"Importing data to {C.OWI_DOWNLOAD_DB_NAME}")
+    with c4db(db_name=C.OWI_DOWNLOAD_DB_NAME, commit=True) as db:
         
-        # if create: 
-        #     print (f"creating tables, constraints, and views from {C.MNcwi_DB_SCHEMA}")
-        #     C4.execute_statements_from_file(db, C.MNcwi_DB_SCHEMA)
+        if create: 
+            print (f"creating tables, constraints, and views from {C.OWI_DB_SCHEMA}")
+            C4.execute_statements_from_file(db, C.OWI_DB_SCHEMA)
  
-        if C.MNcwi_SCHEMA_HAS_FKwellid_CONSTRAINTS:
+        if C.OWI_SCHEMA_HAS_FKwellid_CONSTRAINTS:
             db.query('PRAGMA foreign_keys = False')
  
-        # if data: 
-        #     C4.delete_table_data(db, 'data')
-        #     C4.import_data_from_csv( db, C.MNcwi_SCHEMA_HAS_FKwellid_CONSTRAINTS)
-        #     db.commit_db()
-        #
-        # if locs and C.MNcwi_SCHEMA_HAS_LOCS: 
-        #     C4.delete_table_data(db,'locs')
-        #     if not C4.import_locs_from_csv(db, C.MNcwi_SCHEMA_HAS_FKwellid_CONSTRAINTS):
-        #         C4.import_cwi_locs(db)
-        #     db.commit_db()
-        #
-        # if C.MNcwi_SCHEMA_HAS_WELLID: # and not C.MNcwi_SCHEMA_HAS_FKwellid_CONSTRAINTS:
-        #     C4.populate_wellid_and_index(db, C.MNcwi_SCHEMA_HAS_LOCS)
-        #     db.commit_db()
-        #
-        #
-        # if C.MNcwi_REFORMAT_UNIQUE_NO:
-        #     if data:
-        #         db.update_unique_no_from_wellid('c4ix')
-        #         db.commit_db()
-        #     if locs and C.MNcwi_SCHEMA_HAS_LOCS:
-        #         db.update_unique_no_from_wellid('c4locs')
-        #         db.commit_db()
- 
-        if C.MNcwi_SCHEMA_IDENTIFIER_MODEL == 'MNU':
-            C4.execute_statements_from_file(db, C.MNcwi_MNU_INSERT)
+        if data: 
+            C4.delete_table_data(db, 'data')
+            C4.import_data_from_csv( db, C.OWI_SCHEMA_HAS_FKwellid_CONSTRAINTS)
+            db.commit_db()
         
-        if C.MNcwi_SCHEMA_HAS_FKwellid_CONSTRAINTS and C.MNcwi_SCHEMA_HAS_LOCS:
+        if locs and C.OWI_SCHEMA_HAS_LOCS: 
+            C4.delete_table_data(db,'locs')
+            if not C4.import_locs_from_csv(db, C.OWI_SCHEMA_HAS_FKwellid_CONSTRAINTS):
+                C4.import_cwi_locs(db)
+            db.commit_db()
+        
+        if C.OWI_SCHEMA_HAS_WELLID: # and not C.OWI_SCHEMA_HAS_FKwellid_CONSTRAINTS:
+            C4.populate_wellid_and_index(db, C.OWI_SCHEMA_HAS_LOCS)
+            db.commit_db()
+        
+        
+        if C.OWI_REFORMAT_UNIQUE_NO:
+            if data:
+                db.update_unique_no_from_wellid('c4ix')
+                db.commit_db()
+            if locs and C.OWI_SCHEMA_HAS_LOCS:
+                db.update_unique_no_from_wellid('c4locs')
+                db.commit_db()
+ 
+        if C.OWI_SCHEMA_IDENTIFIER_MODEL == 'MNU':
+            C4.execute_statements_from_file(db, C.OWI_MNU_INSERT)
+        
+        if C.OWI_SCHEMA_HAS_FKwellid_CONSTRAINTS and C.OWI_SCHEMA_HAS_LOCS:
             C4.append_c4locs_to_c4ix(db)
             db.commit_db()
             
-        if C.MNcwi_SCHEMA_HAS_FKwellid_CONSTRAINTS:
+        if C.OWI_SCHEMA_HAS_FKwellid_CONSTRAINTS:
             db.query('PRAGMA foreign_keys = True')
 
 if __name__ == '__main__':

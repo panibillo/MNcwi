@@ -51,7 +51,7 @@ import os
 import sqlite3 as sqlite
 from collections import OrderedDict
 
-# from MNcwi_config import MNcwi_DATA_TABLE_PREFIX
+# from OWI_config import OWI_DATA_TABLE_PREFIX
 
 def showprogress(n, b=10):
     """
@@ -415,7 +415,7 @@ class c4db(DB_SQLite):
         DB_SQLite.__init__(self, db_name, open_db=open_db, commit=commit)
         
 #         datatables = 'ix ad an c1 c2 id pl rm st wl locs'.split()
-#         self.datatables = [f"{MNcwi_DATA_TABLE_PREFIX}{t}" for t in datatables]
+#         self.datatables = [f"{OWI_DATA_TABLE_PREFIX}{t}" for t in datatables]
 
     def __str__(self):
         rv=(f"c4db() a SQLite implementation of County Well Index",

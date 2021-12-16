@@ -1,13 +1,13 @@
 '''
-MNcwi database
+OWI database
 
 Dependencies:
     Python >= 3.7
-    MNcwi_logins.py  
+    OWI_logins.py  
 
 Some code is copied from convert_cwi_to_pandas.py by Randal Barnes     
 
-The purpose of module MNcwi_download_ftp is to download specified zip files from  
+The purpose of module OWI_download_ftp is to download specified zip files from  
 the Minnesota Geologic Survey ftp site, and unzip the files.  
 
 Method RUN_download_cwi demonstrates usage.
@@ -51,8 +51,8 @@ def download_cwi_from_ftp( ftpaddr,
     File dates are compared, and the ftp download only progresses if the
     ftp version is newer.  
     
-    The ftp login should be defined in MNcwi_logins.py
-    The download targets are defined in MNcwi_config.py
+    The ftp login should be defined in OWI_logins.py
+    The download targets are defined in OWI_config.py
     
     Notes on variable names:
         src is used for ftp source files
@@ -101,16 +101,16 @@ def download_cwi_from_ftp( ftpaddr,
 
 
 def RUN_download_cwi():
-    import MNcwi_logins as L
-    import MNcwi_config as C
+    import OWI_logins as L
+    import OWI_config as C
     
     newfiles = download_cwi_from_ftp(
-        ftpaddr = L.MNcwi_FTP_ADDRESS,
-        ftppath = L.MNcwi_FTP_PATH,
-        ftpuser = L.MNcwi_FTP_USERNAME, 
-        ftppass = L.MNcwi_FTP_PASSWORD,
-        downloadpath = C.MNcwi_DOWNLOAD_DIR,
-        downloadfiles = C.MNcwi_DOWNLOAD_FILES) 
+        ftpaddr = L.OWI_FTP_ADDRESS,
+        ftppath = L.OWI_FTP_PATH,
+        ftpuser = L.OWI_FTP_USERNAME, 
+        ftppass = L.OWI_FTP_PASSWORD,
+        downloadpath = C.OWI_DOWNLOAD_DIR,
+        downloadfiles = C.OWI_DOWNLOAD_FILES) 
     print ('New files created:\n   ' + '\n   '.join(newfiles))
     return newfiles
 

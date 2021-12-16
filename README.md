@@ -1,8 +1,8 @@
-# MNcwi
+# OWI
 
 An SQLite implementation of the Minnesota County Well Index (CWI) database. 
 
-(Alternatively called MNcwisqlite)
+(Alternatively called OWIsqlite)
 
 ## Description
 
@@ -46,11 +46,11 @@ This project is tested on Windows 10
 
 * Download the project files from GitHub.  Open a git Bash window and navigate to the parent folder where you want to install it. Then on the Bash line enter:
 
-	git clone https://github.com/panibillo/MNcwi.git 
+	git clone https://github.com/panibillo/OWI.git 
 
-* You are reponsible for getting instructions and credentials for downloading the data files from the ftp site. The needed information is described in file `MNcwi_logins__template.py`.  Make a copy of that file named `MNcwi_logins.py` and enter the information using normal Python syntax.  Do not share that file, and do not add to this repository.
+* You are reponsible for getting instructions and credentials for downloading the data files from the ftp site. The needed information is described in file `OWI_logins__template.py`.  Make a copy of that file named `OWI_logins.py` and enter the information using normal Python syntax.  Do not share that file, and do not add to this repository.
 
-Edit the file `MNcwi_config.py`:
+Edit the file `OWI_config.py`:
 
 * Create the needed folders, and adjust the paths in the config file.  It needs a little under 2 Gigabits to download and unzip the data, and create the database from scratch.  The script has been tested only running it with all manipulated folders defined on a RAM drive of 2Gigabyte size. *Backup your local version of this file, because it is part of the repo and git may overwrite your version!* 
 
@@ -62,7 +62,7 @@ Edit the file `MNcwi_config.py`:
 
 Prepare for execution:
 
-* Ensure that MNcwi_config.py and MNcwi_logins.py exist and have been edited for your installation.
+* Ensure that OWI_config.py and OWI_logins.py exist and have been edited for your installation.
 
 * Ensure that there is sufficient disk space for downloading the data files, extracting the zip files, and creating the database from scratch.  That will take less than 2Gigabytes of disk space (as little as 1.7G?).
 
@@ -72,7 +72,7 @@ Prepare for execution:
 
 * If re-running the program, be sure to first delete the existing database file, or at least delete the tables in it.  The script does not check. 
 
-* You can re-enter the scripts after partial completion, by editing and running either `MNcwi_import_csv.py` or `MNcwi_download_ftp.py`.  Depending on where you re-enter, you may not need to be delete the database - but you must know what you are doing to prevent duplicating data. 
+* You can re-enter the scripts after partial completion, by editing and running either `OWI_import_csv.py` or `OWI_download_ftp.py`.  Depending on where you re-enter, you may not need to be delete the database - but you must know what you are doing to prevent duplicating data. 
 
 * If you create the database on a RAM drive, you may want to save the finished database to a physical drive for later use. 
 

@@ -4,7 +4,7 @@
 **.csv
 **.mdb
 **.sqlite
-src/MNcwi_logins.py
+src/OWI_logins.py
 scratch/**
 bak/**
 .project
