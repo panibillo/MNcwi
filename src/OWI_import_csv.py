@@ -10,6 +10,12 @@ import  shapefile
 from distro import linux_distribution
 from pip._internal.vcs import git
 
+from OWI_sqlfile import execute_statements_from_file
+from OWI_sqlite import c4db
+
+from OWI_config import  OWI_version_40 as C
+from OWI_config import  SWUDS_version_0 as S
+
 """ 
 Simple type checking, type converting, and text cleaning functions.
 These are used for importing .csv files, and assume that the data in the .csv
@@ -175,46 +181,15 @@ class cwi_csvupdate():
         assert os.path.exists(self.cwidatacsvdir), f"Missing {self.cwidatacsvdir}"
         assert os.path.exists(self.locsdir), f"Missing {self.locsdir}"
     
-    def read_sql_file(self, schemafile): 
-        """
-        Read sql statments from an sql file.
-        Returns a list of the statements in the order read.
-        """
-        assert os.path.exists(schemafile), os.path.abspath(schemafile)
-        with open(schemafile) as f:
-            ftxt = f.read()    
-        
-        # The file is allowed to have 1 comment block before the sql statements.
-        # So try splitting on the close comment symbol.
-        try:  
-            ftxt = ftxt.split('*/')[1] 
-        except:
-            pass
-        #Split the text on the ';' symbol into distinct sql statements.
-        statements = [t.strip() + ';' for t in ftxt.split(';')[:-1]]
-        
-        assert len(statements) >= 1
-        return statements
-         
-           
-    def execute_statements_from_file(self, db, c4schemafile):
-        """
-        Confirm that the database does not exist, and create it.
-        Read the table definitions from an sql file
-        """
-        print (db.db_name)
-        statements = self.read_sql_file(c4schemafile)
-        for s in statements:
-            db.query(s)
-
     def delete_table_data(self, db, 
                           tables=None):    
         """
-        Delete all from the c4* data and locs tables
+        Delete all from the c4* data and locs tables. Preparing to import.
         
-        Arguments:
-            db     : an open database instance
-            tables : either None, or a string including 'data' and/or 'locs' 
+        Arguments
+        ---------
+        db     : an open database instance
+        tables : either None, or a string including 'data' and/or 'locs' 
         """
         dodata = tables is None or 'data' in tables
         dolocs = tables is None or 'locs' in tables
@@ -298,31 +273,6 @@ class cwi_csvupdate():
             db.cur.executemany(insert, csvgen(csvname, col_names, col_convert))
             print (f"Completed table {table_name}") 
     
-    def import_swuds_full(self, db, csvname, table_name='r1ap_full'):
-        """
-        Import the swuds csv file into r1ap without modification.
-        """
-        existing_tables = db.get_tablenames()
-        assert table_name in existing_tables,  f'{table_name} missing from db'
-
-        assert os.path.exists(csvname), csvname
-        with open(csvname, 'r') as f:
-            headers = f.readline()
-        csv_cols = headers.replace('"',' ').replace(',',' ').split()
-
-        col_names, col_convert = get_col_names_and_converters(db, table_name, csv_cols)
-        insert = (f"INSERT INTO {table_name}\n"
-                  f" (wellid, {', '.join(col_names)})\n"
-                  f" VALUES ({db.qmarks( len(col_names)+1 )});")
-        
-        db.cur.executemany(insert, csv_wellid_generator(csvname, col_names, col_convert, MNUcol = 'well_number'))
-        print (f"Completed importing table {table_name}") 
-        
-        for u in ('update r1ap_full set unique_no = well_number;',
-                  'update r1ap_full set apid = rowid;' 
-                  ):
-            db.query(u)
-        print (f"Completed updating table {table_name}") 
 
     def import_locs_from_csv(self, db, schema_has_constraints):
         """
@@ -459,27 +409,7 @@ class cwi_csvupdate():
         except Exception as e:
             print (e)
             return False
-        
-def RUN_import_swuds(create=False):
-    from OWI_sqlite import c4db
-    import OWI_config as C
 
-    if 1:
-        # Production
-        csvname = 'R:/mpars_index_permits_installations.csv'
-        db_name = C.OWI_DB_NAME
-    elif 0:
-        # Testing
-        csvname = r'F:\Bill\Workspaces\Py1\OWIsqlite\demo_data\mpars_demo.csv'
-        db_name = r'F:\Bill\Documents\GW\CWI\c4db.sqlite'
-
-    C4 = cwi_csvupdate( C.OWI_DIR,  # args not used, but must be extant paths.
-                        C.OWI_DIR)
-    with c4db(db_name=db_name, commit=True) as db:
-        if create:
-            C4.execute_statements_from_file(db, C.OWI_SWUDS_SCHEMA)
-        C4.import_swuds_full(db, csvname)
-        
 def RUN_import_csv(data=True, 
                    locs=True):
     """ 
@@ -509,53 +439,54 @@ def RUN_import_csv(data=True,
         which parts to run, but that is not yet well written.
     """
     from OWI_sqlite import c4db 
-    import OWI_config as C
        
     if 0 and C.OWI_SCHEMA_HAS_DATA_CONSTRAINTS:
         print('Warning. The CWI data files do not pass UNIQUE constaints')
         raise NotImplementedError('Data constraints models are not implemented')
 
     C4 = cwi_csvupdate( C.OWI_DOWNLOAD_CWIDATACSV_DIR,
-                        C.OWI_DOWNLOAD_DIR)
+                        C.OWI_DOWNLOAD_WELLSSHP_DIR)
     
     create = not os.path.exists(C.OWI_DOWNLOAD_DB_NAME)
     
     print (f"Importing data to {C.OWI_DOWNLOAD_DB_NAME}")
     with c4db(db_name=C.OWI_DOWNLOAD_DB_NAME, commit=True) as db:
         
-        if create: 
-            print (f"creating tables, constraints, and views from {C.OWI_DB_SCHEMA}")
-            C4.execute_statements_from_file(db, C.OWI_DB_SCHEMA)
- 
+        # if create: 
+        #     print (f"creating tables, constraints, and views from {C.OWI_DB_SCHEMA}")
+        #     execute_statements_from_file(db, C.OWI_DB_SCHEMA)
+        #
+
         if C.OWI_SCHEMA_HAS_FKwellid_CONSTRAINTS:
             db.query('PRAGMA foreign_keys = False')
  
-        if data: 
-            C4.delete_table_data(db, 'data')
-            C4.import_data_from_csv( db, C.OWI_SCHEMA_HAS_FKwellid_CONSTRAINTS)
-            db.commit_db()
-        
-        if locs and C.OWI_SCHEMA_HAS_LOCS: 
-            C4.delete_table_data(db,'locs')
-            if not C4.import_locs_from_csv(db, C.OWI_SCHEMA_HAS_FKwellid_CONSTRAINTS):
-                C4.import_cwi_locs(db)
-            db.commit_db()
-        
-        if C.OWI_SCHEMA_HAS_WELLID: # and not C.OWI_SCHEMA_HAS_FKwellid_CONSTRAINTS:
-            C4.populate_wellid_and_index(db, C.OWI_SCHEMA_HAS_LOCS)
-            db.commit_db()
-        
-        
-        if C.OWI_REFORMAT_UNIQUE_NO:
-            if data:
-                db.update_unique_no_from_wellid('c4ix')
-                db.commit_db()
-            if locs and C.OWI_SCHEMA_HAS_LOCS:
-                db.update_unique_no_from_wellid('c4locs')
-                db.commit_db()
+        # if data: 
+        #     C4.delete_table_data(db, 'data')
+        #     C4.import_data_from_csv( db, C.OWI_SCHEMA_HAS_FKwellid_CONSTRAINTS)
+        #     db.commit_db()
+        #
+        # if locs and C.OWI_SCHEMA_HAS_LOCS: 
+        #     C4.delete_table_data(db,'locs')
+        #     if not C4.import_locs_from_csv(db, C.OWI_SCHEMA_HAS_FKwellid_CONSTRAINTS):
+        #         C4.import_cwi_locs(db)
+        #     db.commit_db()
+        #
+        # if C.OWI_SCHEMA_HAS_WELLID: # and not C.OWI_SCHEMA_HAS_FKwellid_CONSTRAINTS:
+        #     C4.populate_wellid_and_index(db, C.OWI_SCHEMA_HAS_LOCS)
+        #     db.commit_db()
+        #
+        #
+        # if C.OWI_REFORMAT_UNIQUE_NO:
+        #     if data:
+        #         db.update_unique_no_from_wellid('c4ix')
+        #         db.commit_db()
+        #     if locs and C.OWI_SCHEMA_HAS_LOCS:
+        #         db.update_unique_no_from_wellid('c4locs')
+        #         db.commit_db()
  
         if C.OWI_SCHEMA_IDENTIFIER_MODEL == 'MNU':
-            C4.execute_statements_from_file(db, C.OWI_MNU_INSERT)
+            #execute_statements_from_file(db, C.OWI_MNU_INSERT)
+            execute_statements_from_file(db, C.OWI_MNU_VIEWS)
         
         if C.OWI_SCHEMA_HAS_FKwellid_CONSTRAINTS and C.OWI_SCHEMA_HAS_LOCS:
             C4.append_c4locs_to_c4ix(db)
@@ -564,17 +495,51 @@ def RUN_import_csv(data=True,
         if C.OWI_SCHEMA_HAS_FKwellid_CONSTRAINTS:
             db.query('PRAGMA foreign_keys = True')
 
+
+def import_swuds_full(self, db, csvname, table_name='r1ap_full'):
+    """
+    Import the swuds csv file into r1ap without modification.
+    """
+    existing_tables = db.get_tablenames()
+    assert table_name in existing_tables,  f'{table_name} missing from db'
+
+    assert os.path.exists(csvname), csvname
+    with open(csvname, 'r') as f:
+        headers = f.readline()
+    csv_cols = headers.replace('"',' ').replace(',',' ').split()
+
+    col_names, col_convert = get_col_names_and_converters(db, table_name, csv_cols)
+    insert = (f"INSERT INTO {table_name}\n"
+              f" (wellid, {', '.join(col_names)})\n"
+              f" VALUES ({db.qmarks( len(col_names)+1 )});")
+    
+    db.cur.executemany(insert, csv_wellid_generator(csvname, col_names, col_convert, MNUcol = 'well_number'))
+    print (f"Completed importing table {table_name}") 
+    
+    for u in ('update r1ap_full set unique_no = well_number;',
+              'update r1ap_full set apid = rowid;' 
+              ):
+        db.query(u)
+    print (f"Completed updating table {table_name}") 
+        
+def RUN_import_swuds(create=False):
+
+    if 1:
+        csvname = S.OWI_DOWNLOAD_APPROPRIATIONS_CSV
+        db_name = C.OWI_DOWNLOAD_DB_NAME
+    elif 0:
+        # Testing
+        csvname = r'F:\Bill\Workspaces\Py1\OWIsqlite\demo_data\mpars_demo.csv'
+        db_name = r'F:\Bill\Documents\GW\CWI\c4db.sqlite'
+
+    with c4db(db_name=db_name, commit=True) as db:
+        if create:
+            execute_statements_from_file(db, S.OWI_SWUDS_SCHEMA)
+        import_swuds_full(db, csvname)
+        
 if __name__ == '__main__':
-    #RUN_decode()
     RUN_import_csv()
     #RUN_import_swuds(create=True)
-    
-    # TODO:
-    #     run the decode efficiently on all of the csv files - to be safe.
-    #     commit from Windows to git.
-    #     stash in linux
-    #     pull from git
-    #     merge.
-        
+            
     print ('\n',r'\\\\\\\\\\\\\\\\\\ DONE //////////////////')    
         

@@ -13,20 +13,11 @@ the Minnesota Geologic Survey ftp site, and unzip the files.
 Method RUN_download_cwi demonstrates usage.
 '''
 
-import os
+import os, shutil
 import time
 import datetime
 from ftplib import FTP
-# import pyodbc
 import zipfile
-
-
-
-# import sys
-# print (sys.version_info)
-# import ftplib
-# print (ftplib.__dir__())
-
 
 import logging
 
@@ -43,6 +34,7 @@ def download_cwi_from_ftp( ftpaddr,
                            ftpuser, 
                            ftppass,
                            downloadpath,
+                           downloadshppath,
                            downloadfiles):
     ''' 
     Download newer cwi files from ftp. Unzip. Return list of new files. 
@@ -56,7 +48,7 @@ def download_cwi_from_ftp( ftpaddr,
     
     Notes on variable names:
         src is used for ftp source files
-        dst is used for local copies
+        dst is used for local copies of the files
     '''
 
     log.info(msg=('Downloading CWI sources from ftp site'))
@@ -70,7 +62,10 @@ def download_cwi_from_ftp( ftpaddr,
         dict_ftp_file_modify_times = {f[0]:int(float(f[1].get('modify'))) for f in ftp.mlsd(path=ftppath)}
     
         for fname in downloadfiles:
-            destfile = os.path.join(downloadpath, fname)
+            if 'locs' in fname: 
+                destfile = os.path.join(downloadshppath, fname)
+            else:
+                destfile = os.path.join(downloadpath, fname)
             if os.path.exists(destfile):
                 # Compare file times to see if a fresh download is needed
                 mtime = datetime.datetime.fromtimestamp( os.path.getmtime(destfile) )
@@ -81,19 +76,34 @@ def download_cwi_from_ftp( ftpaddr,
                 
             start = time.time()
             print( f"downloading {fname} ...", end='' )
+            
             with open(destfile, 'wb') as localfile:
                 ftp.retrbinary('RETR '+ftppath+'/'+fname, localfile.write, 1024 )
+            
             duration = (time.time()-start)/60.0
             print( f"  ... DONE. completed in {duration:1.3f} minutes")
             rv.append (destfile)
             
             if '.zip' in fname:
                 print(f"unzipping {destfile} ..." )
+                
                 with zipfile.ZipFile(destfile, 'r') as zip_ref:
-                    zip_ref.extractall(downloadpath)  
+                    zip_ref.extractall(os.path.dirname(destfile))  
+                
                 log.info(f'{fname} downloaded and unzipped.')
             else:
                 log.info(f'{fname} downloaded.')
+                
+    # for basename in ('wells.', 'unloc_wells.', 'cwilocs.zip'):
+    #     for f in os.listdir(downloadpath):
+    #         if f.startswith(basename):
+    #             src = os.path.join(downloadpath, f)
+    #             dst = os.path.join(downloadshppath, f)
+    #             try:
+    #                 shutil.move (src, dst)
+    #             except Exception as e:
+    #                 print (f'Moving "{src}" to "{dst}"')
+    #                 print (e)
     
     duration = (time.time()-ftpstart)/60.0    
     print(f"*** ftp download & unzip finished in {duration:1.3f} minutes ***" )        
@@ -102,7 +112,7 @@ def download_cwi_from_ftp( ftpaddr,
 
 def RUN_download_cwi():
     import OWI_logins as L
-    import OWI_config as C
+    from OWI_config import OWI_version_40 as C
     
     newfiles = download_cwi_from_ftp(
         ftpaddr = L.OWI_FTP_ADDRESS,
@@ -110,6 +120,7 @@ def RUN_download_cwi():
         ftpuser = L.OWI_FTP_USERNAME, 
         ftppass = L.OWI_FTP_PASSWORD,
         downloadpath = C.OWI_DOWNLOAD_DIR,
+        downloadshppath = C.OWI_DOWNLOAD_WELLSSHP_DIR,
         downloadfiles = C.OWI_DOWNLOAD_FILES) 
     print ('New files created:\n   ' + '\n   '.join(newfiles))
     return newfiles

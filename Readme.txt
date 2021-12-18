@@ -1,4 +1,4 @@
-MNcwi - An SQLite implementation of the Minnesota County Well Index database. 
+OWI - An SQLite implementation of the Minnesota County Well Index database. 
 
 Date:   	2021-10-02
 Author: 	William Olsen   
@@ -32,14 +32,14 @@ Originally, all versions are identified as c4.[S].[V]  where S distinguishes maj
 An outline of current versions is provided in cwischema_c4_versions.txt.
 
 Download directives are contained in the non-public file 
-	config/MNcwi_logins.py  
+	config/OWI_logins.py  
 Only a template version of this file is maintained in the git repo. Implementers of this project are responsible for requesting login information from the Minnesota Geologic Survey. 
 	
 Import directives, including schema version information, are contained in file
-	config/MNcwi_config.py  
+	config/OWI_config.py  
 It declares the local path names, the version number, and the version schema:
-	MNcwi_DB_VERSION   
-	MNcwi_DB_SCHEMA
+	OWI_DB_VERSION   
+	OWI_DB_SCHEMA
 
 Initial software versions are suitable only for building a local database from scratch. There is no functionality for maintaining a local database by adding only new records or updating only changed records.
 
@@ -47,6 +47,9 @@ Initial software versions are suitable only for building a local database from s
 References:
 
 County Well Index, 2021, Database created and maintained by the Minnesota Geological Survey, a department of the University of Minnesota,  with the assistance of the Minnesota Department of Health.
+CWI documentation:  http://mgsweb2.mngs.umn.edu/cwi_doc/cwidoc.htm
+MWI map interface:  https://mnwellindex.web.health.state.mn.us/
+MWI text search:    https://mnwellindex.web.health.state.mn.us/mwi/
 
 http://mgsweb2.mngs.umn.edu/cwi_doc/cwiDataTables.htm
 

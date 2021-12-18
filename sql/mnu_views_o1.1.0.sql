@@ -5,7 +5,7 @@ Date:       2021-02-10
 Author:     William Olsen
 
 These are DDL statements for an SqlLite version of the CWI database.
-These statements create views of the c4 data tables that expose the primary Unique Well Number only, utilizing View v7idp
+These statements create views of the c4 data tables that expose the primary Unique Well Number only, utilizing View v1idp
 
 This version:
     - Contains the c4 data tables
@@ -31,41 +31,43 @@ https://www.sqlite.org
 
 */
 
-CREATE VIEW v7idu AS
+-- A veiw of only MNU identifiers
+CREATE VIEW v1idu AS
     SELECT * FROM c4id
     WHERE MNU in(1,2,3)
 ;
 
-CREATE VIEW v7idp AS
-    SELECT *  FROM c4id
-    WHERE PMNU = 1
+-- A view of only MNU singleton identifiers
+CREATE VIEW v1ids AS
+    SELECT * FROM c4id
+    WHERE sMNU = 1
 ;
 
 -- Cross reference map from Multi-well identifiers to Individual well
 -- identifiers.  List multi-well identifiers next to each of their
 -- individual well identifiers, and also show the join type (as JMNU)
 -- and the ID_TYPE and ID_PROG of each identifier.
-CREATE VIEW v7idmxref AS -- mx: multi-well x-references
+CREATE VIEW v1id_mxref AS -- mx: multi-well x-references
 SELECT M.wellid AS Mwellid, M.identifier AS Midentifier, 
-       J.MNU AS JMNU, 
+       X.MNU AS MNU, 
        I.identifier AS Iidentifier, I.wellid AS Iwellid, 
        M.ID_TYPE AS MID_TYPE, M.ID_PROG AS MID_PROG,
        I.ID_TYPE AS IID_TYPE, I.ID_PROG AS IID_PROG
-FROM c7id M
-LEFT JOIN c7id J
-  ON J.identifier = M.identifier
-LEFT JOIN c7id I
-  ON J.wellid = I.wellid
-WHERE M.MNU=2
-  AND J.MNU IN (4,5)
-  AND I.pMNU=1
-ORDER BY M.identifier;
+FROM o1id M
+LEFT JOIN o1id X
+  ON M.identifier = X.identifier
+LEFT JOIN o1id I
+  ON X.wellid = I.wellid
+WHERE M.MNU IN (2,3)
+  AND X.MNU IN (4,5)
+  AND I.sMNU=1
+ORDER BY M.identifier, I.wellid;
 
-CREATE VIEW v7ix AS
+CREATE VIEW vo1ix AS
 SELECT
     A.rowid,
     A.wellid,
-    P.UNIQUE_NO,
+    S.UNIQUE_NO,
     A.COUNTY_C,
     A.WELLNAME,
     A.TOWNSHIP,
@@ -114,15 +116,15 @@ SELECT
     A.ENTRY_DATE,
     A.UPDT_DATE
 FROM c4ix A
-LEFT JOIN v7idp P
-  ON A.wellid = P.wellid
+LEFT JOIN v1ids S
+  ON A.wellid = S.wellid
 ;
 
-CREATE VIEW v7ad AS
+CREATE VIEW vo1ad AS
 SELECT
     A.rowid,
     A.wellid,
-    P.UNIQUE_NO,
+    S.UNIQUE_NO,
     A.NAME,
     A.ADDTYPE_C,
     A.HOUSE_NO,
@@ -136,29 +138,29 @@ SELECT
     A.UPDT_DATE,
     A.OTHER
 FROM c4ad A
-LEFT JOIN v7idp P
-  ON A.wellid = P.wellid
+LEFT JOIN v1ids S
+  ON A.wellid = S.wellid
 ;
 
-CREATE VIEW v7an AS
+CREATE VIEW vo1an AS
 SELECT
     A.rowid,
     A.wellid,
-    P.UNIQUE_NO,
+    S.UNIQUE_NO,
     A.C5AN_SEQ_NO,
     A.AZIMUTH,
     A.INCLIN,
     A.ANG_DEPTH
 FROM c4an A
-LEFT JOIN v7idp P
-  ON A.wellid = P.wellid
+LEFT JOIN v1ids S
+  ON A.wellid = S.wellid
 ;
 
-CREATE VIEW v7c1 AS
+CREATE VIEW vo1c1 AS
 SELECT
     A.rowid,
     A.wellid,
-    P.UNIQUE_NO,
+    S.UNIQUE_NO,
     A.DRILL_METH,
     A.DRILL_FLUD,
     A.HYDROFRAC,
@@ -196,15 +198,15 @@ SELECT
     A.ENTRY_DATE,
     A.UPDT_DATE
 FROM c4c1 A
-LEFT JOIN v7idp P
-  ON A.wellid = P.wellid
+LEFT JOIN v1ids S
+  ON A.wellid = S.wellid
 ;
 
-CREATE VIEW v7c2 AS
+CREATE VIEW vo1c2 AS
 SELECT
     A.rowid,
     A.wellid,
-    P.UNIQUE_NO,
+    S.UNIQUE_NO,
     A.CONSTYPE,
     A.FROM_DEPTH,
     A.TO_DEPTH,
@@ -215,15 +217,15 @@ SELECT
     A.AMOUNT,
     A.UNITS
 FROM c4c2 A
-LEFT JOIN v7idp P
-  ON A.wellid = P.wellid
+LEFT JOIN v1ids S
+  ON A.wellid = S.wellid
 ;
 
-CREATE VIEW v7pl AS
+CREATE VIEW vo1pl AS
 SELECT
     A.rowid,
     A.wellid,
-    P.UNIQUE_NO,
+    S.UNIQUE_NO,
     A.PUMPTESTID,
     A.TEST_DATE,
     A.START_MEAS,
@@ -231,27 +233,27 @@ SELECT
     A.DURATION,
     A.PUMP_MEAS
 FROM c4pl A
-LEFT JOIN v7idp P
-  ON A.wellid = P.wellid
+LEFT JOIN v1ids S
+  ON A.wellid = S.wellid
 ;
 
-CREATE VIEW v7rm AS
+CREATE VIEW vo1rm AS
 SELECT
     A.rowid,
     A.wellid,
-    P.UNIQUE_NO,
+    S.UNIQUE_NO,
     A.SEQ_NO,
     A.REMARKS
 FROM c4rm A
-LEFT JOIN v7idp P
-  ON A.wellid = P.wellid
+LEFT JOIN v1ids S
+  ON A.wellid = S.wellid
 ;
 
-CREATE VIEW v7st AS
+CREATE VIEW vo1st AS
 SELECT
     A.rowid,
     A.wellid,
-    P.UNIQUE_NO,
+    S.UNIQUE_NO,
     A.DEPTH_TOP,
     A.DEPTH_BOT,
     A.DRLLR_DESC,
@@ -262,15 +264,15 @@ SELECT
     A.LITH_SEC,
     A.LITH_MINOR
 FROM c4sts A
-LEFT JOIN v7idp P
-  ON A.wellid = P.wellid
+LEFT JOIN v1ids S
+  ON A.wellid = S.wellid
 ;
 
-CREATE VIEW v7wl AS
+CREATE VIEW vo1wl AS
 SELECT
     A.rowid,
     A.wellid,
-    P.UNIQUE_NO,
+    S.UNIQUE_NO,
     A.MEAS_TYPE,
     A.MEAS_DATE,
     A.MEAS_TIME,
@@ -283,15 +285,15 @@ SELECT
     A.ENTRY_DATE,
     A.UPDT_DATE
 FROM c4wl A
-LEFT JOIN v7idp P
-  ON A.wellid = P.wellid
+LEFT JOIN v1ids S
+  ON A.wellid = S.wellid
 ;
 
-CREATE VIEW v7locs AS
+CREATE VIEW vo1locs AS
 SELECT
     A.rowid,
     A.wellid,
-    P.UNIQUE_NO,
+    S.UNIQUE_NO,
     A.CWI_loc,
     A.COUNTY_C,
     A.UNIQUE_NO,
@@ -358,8 +360,8 @@ SELECT
     A.SWLAVGMEAS,
     A.SWLAVGELEV
 FROM c4locs A
-LEFT JOIN v7idp P
-  ON A.wellid = P.wellid
+LEFT JOIN v1ids S
+  ON A.wellid = S.wellid
 ;
 
 

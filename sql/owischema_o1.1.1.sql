@@ -1,6 +1,6 @@
 /* CWI SCHEMA
 
-Version:    c4.4.0
+Version:    c4.4.1
 Date:       2021-02-10
 Author:     William Olsen
 
@@ -11,12 +11,16 @@ This version:
     - Adds table c4locs for well coordinates.
     - Adds rowid and wellid to each c4 data table
     - Adds Foreign Key constraints to all tables, wellid -> c4ix(wellid)
-    + Makes c7id into the main table for all well identifiers.
-        + Add all Unique Well Numbers in c4ix to c7id.
-        + Add conditional unique indices on c7id to enforce uniqueness of
-          the primary identifier.
-        + Add Views on c7id to simplify using Unique Well Numbers for search
-          and for export. (Views are defined in mnu_views_c4.4.0)
+    + Makes c4id into the main location for all well identifiers.
+        + Add all Unique Well Numbers in c4ix to c4id.
+        + Add conditional unique indices on c4id to enforce uniqueness.
+        + Add conditional unique index on c4id to enforce uniqueness of
+          the primary MNU identifier.
+        + Add conditional unique index on c4id to enforce uniqueness of
+          the MNU identifiers.
+        + Add Views on c4id to simplify using Unique Well Numbers for search
+          and for export.
+        + Add UNIQUE constraints to data tables to prevent redundancies.
         + Data, as cloned from cwi, may not pass all integrity checks.
 
 References:
@@ -196,77 +200,34 @@ CREATE TABLE c4id (
     rowid       INTEGER PRIMARY KEY NOT NULL,
     wellid      INTEGER NOT NULL,
     RELATEID    TEXT    NOT NULL,
-    IDENTIFIER  TEXT,
-    ID_TYPE     TEXT,
-    ID_PROG     TEXT,
-    MNU         INTEGER NOT NULL DEFAULT (0),
-    pMNU        INTEGER NOT NULL DEFAULT (0),
-    mexplain    TEXT,
-    mplan       TEXT,
-    mresolved   INTEGER,
-	mremark 	TEXT
-);
-
-CREATE TABLE c7id (
-    rowid       INTEGER PRIMARY KEY NOT NULL,
-    wellid      INTEGER NOT NULL,
-    RELATEID    TEXT    NOT NULL,
     IDENTIFIER  TEXT    NOT NULL,
     ID_TYPE     TEXT,
     ID_PROG     TEXT,
-    MNU         INTEGER NOT NULL DEFAULT (0),
-    pMNU        INTEGER NOT NULL DEFAULT (0),
-	mexplain    TEXT,
-	mplan       TEXT,
-	mresolved	INTEGER,
-	mremark 	TEXT
-    CONSTRAINT fk_c7id_wellid
+    MNU      INTEGER NOT NULL DEFAULT (0),
+    sMNU     INTEGER NOT NULL DEFAULT (0),
+    CONSTRAINT fk_c4id_wellid
         FOREIGN KEY (wellid)
         REFERENCES c4ix (wellid)
         ON UPDATE CASCADE
         ON DELETE RESTRICT,
-    CONSTRAINT chk_c7id_MNU
-        CHECK (((pMNU = 0) AND (MNU BETWEEN 0 AND 20)) 
-            OR ((pMNU = 1) AND (MNU IN (1,2,3))))
-);		   
--- MNU values:   0 : not MNU
---               1 : Regular Unique Well Number referencing a wellid that 
---                   describes a single well
---               2 : A Multiwell Record Number referencing the wellid that 
---                   desribes the set of wells.
---               4 : A Multiwell Record identifier referencing a wellid that 
---                   describes an individual well from a multiwell set.
---               5 : Like 4, but signals that the multiwell wellid is missing.
---               6 : 
---               10-20 : Records needing various kinds of work. No Uniqueness 
---                   constraints. 
-
-CREATE UNIQUE INDEX ux_c7id_IDENTIFIER__MNU
-    ON c7id (identifier)
-    WHERE MNU in (1,2,3)
-;
- 
-CREATE UNIQUE INDEX ux_c7id_wellid__pMNU
-    ON c7id (wellid)
-    WHERE pMNU = 1
-;
- 
-CREATE UNIQUE INDEX ux_c7id_id_identifier_MNU
-    ON c7id(wellid, identifier)  
-    WHERE  MNU IN (1,2,3,4,5)
-;
-
-create table c7id_match (
-    rowid       INTEGER PRIMARY KEY NOT NULL,
-    wellid1     INTEGER NOT NULL,
-    wellid2     INTEGER,
-	identifier1 TEXT,
-	identifier2 TEXT,
-	mexplain    TEXT,
-	mplan       TEXT,
-	mresolved	INTEGER,
-	mremark 	TEXT
+    CONSTRAINT chk_MNU_VALUE
+        CHECK (MNU IN (0,1)),
+    CONSTRAINT chk_sMNU_VALUE
+        CHECK (sMNU IN (0,1)),
+    CONSTRAINT chk_sMNU_TRUE
+        CHECK ((sMNU = MNU) OR (sMNU = 0))
+        -- can have is_pMU=1 AND MNU=1, or sMNU=0 and MNU=anything
 );
+
+CREATE UNIQUE INDEX ux_c4id_IDENTIFIER_MNU
+    ON c4id (IDENTIFIER)
+    WHERE MNU = 1
+;
+
+CREATE UNIQUE INDEX ux_c4id_IDENTIFIER_sMNU
+    ON c4id (wellid)
+    WHERE sMNU = 1
+;
 
 CREATE TABLE c4pl (
     rowid       INTEGER PRIMARY KEY NOT NULL,
@@ -285,14 +246,14 @@ CREATE TABLE c4pl (
         ON DELETE RESTRICT
 );
 
---    CONSTRAINT un_c4rm_wellid_SEQ_NO
---        UNIQUE (wellid, SEQ_NO),
 CREATE TABLE c4rm (
     rowid       INTEGER PRIMARY KEY NOT NULL,
     wellid      INTEGER NOT NULL,
     RELATEID    TEXT    NOT NULL,
     SEQ_NO      INTEGER,
     REMARKS     TEXT,
+    CONSTRAINT un_c4rm_wellid_SEQ_NO
+        UNIQUE (wellid, SEQ_NO),
     CONSTRAINT fk_c4rm_wellid
         FOREIGN KEY (wellid)
         REFERENCES c4ix (wellid)
@@ -300,10 +261,6 @@ CREATE TABLE c4rm (
         ON DELETE RESTRICT
 );
 
---    CONSTRAINT un_c4st_wellid_DEPTH_TOP
---        UNIQUE (wellid, DEPTH_TOP),
---    CONSTRAINT un_c4st_wellid_DEPTH_BOT
---        UNIQUE (wellid, DEPTH_BOT),
 CREATE TABLE c4st (
     rowid       INTEGER PRIMARY KEY NOT NULL,
     wellid      INTEGER NOT NULL,
@@ -317,6 +274,10 @@ CREATE TABLE c4st (
     LITH_PRIM   TEXT,
     LITH_SEC    TEXT,
     LITH_MINOR  TEXT,
+    CONSTRAINT un_c4st_wellid_DEPTH_TOP
+        UNIQUE (wellid, DEPTH_TOP),
+    CONSTRAINT un_c4st_wellid_DEPTH_BOT
+        UNIQUE (wellid, DEPTH_BOT),
     CONSTRAINT fk_c4st_wellid
         FOREIGN KEY (wellid)
         REFERENCES c4ix (wellid)
@@ -424,13 +385,3 @@ CREATE TABLE c4locs (
         ON DELETE RESTRICT
 );
 
-create table c4unresolved_merges(
-    rowid       INTEGER PRIMARY KEY NOT NULL,
-    wellid1     INTEGER NOT NULL,
-    wellid2     INTEGER,
-    unique_no1  TEXT,
-    unique_no2  TEXT,
-    resolved    TEXT DEFAULT 'NO'
-    CONSTRAINT un_c4unresolved_merge_wellids
-        UNIQUE (wellid1, wellid2),
-)
