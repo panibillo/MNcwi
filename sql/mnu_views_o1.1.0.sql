@@ -33,13 +33,13 @@ https://www.sqlite.org
 
 -- A veiw of only MNU identifiers
 CREATE VIEW v1idu AS
-    SELECT * FROM c4id
+    SELECT * FROM o1id
     WHERE MNU in(1,2,3)
 ;
 
 -- A view of only MNU singleton identifiers
 CREATE VIEW v1ids AS
-    SELECT * FROM c4id
+    SELECT * FROM o1id
     WHERE sMNU = 1
 ;
 

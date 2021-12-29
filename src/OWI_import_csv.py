@@ -154,20 +154,16 @@ def shp_locs_generator(shpname):
     else:
         cwi_loc = 'loc'
     assert os.path.exists(shpname), f"Shape file not found {shpname}."
+
     with shapefile.Reader(shpname) as shpf: 
         keys = tuple((f[0] for f in shpf.fields[1:]))
-        
-#         print ('DEBUG : ICOUNT STATMENT IS FOR DEBUG')
-#         ICOUNT = 0
+
         for srec in shpf:
-#             ICOUNT += 1
-#             if ICOUNT > 10: 
-#                 break
             yield tuple([cwi_loc] + [srec.record[k] for k in keys])
 
 
-        
 class cwi_csvupdate():
+    """ Methods for importing csv files into OWI database tables. """
     
     def __init__(self,
                  cwidatacsvdir,
@@ -322,55 +318,56 @@ class cwi_csvupdate():
             db.cur.executemany(insert, shp_locs_generator(shpname))
             print (f'completed import of shapefile {shpname}')
 
-    def append_c4locs_to_c4ix(self, db):        
-        """
-        Append new records in c4locs to c4ix.
-        
-        The shapefiles may contain well records not yet entered in the cwi data 
-        tables. These records are identified because they have wellid values 
-        missing from c4ix. 
-        
-        These records must be appended to c4ix in order to meet Foreign Key
-        constraints on wellid (c4locs.wellid references c4ix.wellid).
+    # def append_c4locs_to_c4ix(self, db):        
+    #     """
+    #     Append new records in c4locs to c4ix.
+    #
+    #     The shapefiles may contain well records not yet entered in the cwi data 
+    #     tables. These records are identified because they have wellid values 
+    #     missing from c4ix. 
+    #
+    #     These records must be appended to c4ix in order to meet Foreign Key
+    #     constraints on wellid (c4locs.wellid references c4ix.wellid).
+    #
+    #     No effort is made to add information from the new c4locs records to
+    #     any c4 data tables other than c4ix.
+    #     """
+    #     print ('Appending Recent records in c4locs to c4ix')
+    #     i = """Insert into c4ix (
+    #         wellid, RELATEID, COUNTY_C, UNIQUE_NO, WELLNAME,
+    #         TOWNSHIP, RANGE, RANGE_DIR, SECTION, SUBSECTION, MGSQUAD_C,
+    #         ELEVATION, ELEV_MC,
+    #         STATUS_C, USE_C,
+    #         LOC_MC, LOC_SRC, DATA_SRC,
+    #         DEPTH_DRLL, DEPTH_COMP, DATE_DRLL,
+    #         CASE_DIAM, CASE_DEPTH, GROUT,
+    #         POLLUT_DST, POLLUT_DIR, POLLUT_TYP,
+    #         STRAT_DATE, STRAT_UPD, STRAT_SRC, STRAT_GEOL, STRAT_MC,
+    #         DEPTH2BDRK, FIRST_BDRK, LAST_STRAT, OHTOPUNIT, OHBOTUNIT,
+    #         AQUIFER, CUTTINGS, CORE, BHGEOPHYS,
+    #         GEOCHEM, WATERCHEM, OBWELL, SWL, DH_VIDEO,
+    #         INPUT_SRC, UNUSED, ENTRY_DATE, UPDT_DATE)
+    #     SELECT
+    #         L.wellid, L.RELATEID, L.COUNTY_C, L.UNIQUE_NO, L.WELLNAME,
+    #         L.TOWNSHIP, L.RANGE, L.RANGE_DIR, L.SECTION, L.SUBSECTION, L.MGSQUAD_C,
+    #         L.ELEVATION, L.ELEV_MC,
+    #         L.STATUS_C, L.USE_C,
+    #         L.LOC_MC, L.LOC_SRC, L.DATA_SRC,
+    #         L.DEPTH_DRLL, L.DEPTH_COMP, L.DATE_DRLL,
+    #         L.CASE_DIAM, L.CASE_DEPTH, L.GROUT,
+    #         L.POLLUT_DST, L.POLLUT_DIR, L.POLLUT_TYP,
+    #         L.STRAT_DATE, L.STRAT_UPD, L.STRAT_SRC, L.STRAT_GEOL, L.STRAT_MC,
+    #         L.DEPTH2BDRK, L.FIRST_BDRK, L.LAST_STRAT, L.OHTOPUNIT, L.OHBOTUNIT,
+    #         L.AQUIFER, L.CUTTINGS, L.CORE, L.BHGEOPHYS,
+    #         L.GEOCHEM, L.WATERCHEM, L.OBWELL, L.SWL, L.DH_VIDEO,
+    #         L.INPUT_SRC, L.UNUSED, L.ENTRY_DATE, L.UPDT_DATE
+    #     FROM c4locs L
+    #     LEFT JOIN c4ix X
+    #       ON L.wellid = X.wellid
+    #       WHERE X.wellid IS NULL;""".replace('                ','')
+    #     db.query(i)
+    #
 
-        No effort is made to add information from the new c4locs records to
-        any c4 data tables other than c4ix.
-        """
-        print ('Appending Recent records in c4locs to c4ix')
-        i = """Insert into c4ix (
-                    wellid, RELATEID, COUNTY_C, UNIQUE_NO, WELLNAME,
-                    TOWNSHIP, RANGE, RANGE_DIR, SECTION, SUBSECTION, MGSQUAD_C,
-                    ELEVATION, ELEV_MC,
-                    STATUS_C, USE_C,
-                    LOC_MC, LOC_SRC, DATA_SRC,
-                    DEPTH_DRLL, DEPTH_COMP, DATE_DRLL,
-                    CASE_DIAM, CASE_DEPTH, GROUT,
-                    POLLUT_DST, POLLUT_DIR, POLLUT_TYP,
-                    STRAT_DATE, STRAT_UPD, STRAT_SRC, STRAT_GEOL, STRAT_MC,
-                    DEPTH2BDRK, FIRST_BDRK, LAST_STRAT, OHTOPUNIT, OHBOTUNIT,
-                    AQUIFER, CUTTINGS, CORE, BHGEOPHYS,
-                    GEOCHEM, WATERCHEM, OBWELL, SWL, DH_VIDEO,
-                    INPUT_SRC, UNUSED, ENTRY_DATE, UPDT_DATE)
-                SELECT
-                    L.wellid, L.RELATEID, L.COUNTY_C, L.UNIQUE_NO, L.WELLNAME,
-                    L.TOWNSHIP, L.RANGE, L.RANGE_DIR, L.SECTION, L.SUBSECTION, L.MGSQUAD_C,
-                    L.ELEVATION, L.ELEV_MC,
-                    L.STATUS_C, L.USE_C,
-                    L.LOC_MC, L.LOC_SRC, L.DATA_SRC,
-                    L.DEPTH_DRLL, L.DEPTH_COMP, L.DATE_DRLL,
-                    L.CASE_DIAM, L.CASE_DEPTH, L.GROUT,
-                    L.POLLUT_DST, L.POLLUT_DIR, L.POLLUT_TYP,
-                    L.STRAT_DATE, L.STRAT_UPD, L.STRAT_SRC, L.STRAT_GEOL, L.STRAT_MC,
-                    L.DEPTH2BDRK, L.FIRST_BDRK, L.LAST_STRAT, L.OHTOPUNIT, L.OHBOTUNIT,
-                    L.AQUIFER, L.CUTTINGS, L.CORE, L.BHGEOPHYS,
-                    L.GEOCHEM, L.WATERCHEM, L.OBWELL, L.SWL, L.DH_VIDEO,
-                    L.INPUT_SRC, L.UNUSED, L.ENTRY_DATE, L.UPDT_DATE
-                FROM c4locs L
-                LEFT JOIN c4ix X
-                  ON L.wellid = X.wellid
-                  WHERE X.wellid IS NULL;""".replace('                ','')
-        db.query(i)
-            
     def populate_wellid_and_index(self, db, haslocs):
         """
         Set the wellid values in all data tables.
@@ -413,7 +410,8 @@ class cwi_csvupdate():
 def RUN_import_csv(data=True, 
                    locs=True):
     """ 
-    Demonstrate full import from csv files.
+    Demonstrate full import from csv files. 
+    Creates a new OWI.sqlite.  Does not update an existing OWI.sqlite
 
     Arguments
     ---------
@@ -424,6 +422,7 @@ def RUN_import_csv(data=True,
                 
     Prerequisites
     -------------
+        - OWI_config.py defined files and directories:
         - OWI_DOWNLOAD_DB_NAME        
             - must not exist or is completely empty of data tables.
         - OWI_DB_SCHEMA               must exist: named schema file.
@@ -434,15 +433,16 @@ def RUN_import_csv(data=True,
     --------------
     -   If it runs incompletely or with errors, the final state may be faulty.
     -   If it runs incompletely or with errors, you can try to comment out
-        sections that have been complete in order to only run the incomplete
-        portions. The logic is intended to let the user programmatically control 
-        which parts to run, but that is not yet well written.
+        sections below that have been complete in order to only run the 
+        incomplete portions. The logic allows limited user control from this
+        method, but does not recognize when steps have been completed.  For 
+        example, reading in csv files twice will just create duplicate records.
     """
     from OWI_sqlite import c4db 
        
-    if 0 and C.OWI_SCHEMA_HAS_DATA_CONSTRAINTS:
+    if C.OWI_SCHEMA_HAS_DATA_CONSTRAINTS:
         print('Warning. The CWI data files do not pass UNIQUE constaints')
-        raise NotImplementedError('Data constraints models are not implemented')
+        #raise NotImplementedError('Data constraints models are not implemented')
 
     C4 = cwi_csvupdate( C.OWI_DOWNLOAD_CWIDATACSV_DIR,
                         C.OWI_DOWNLOAD_WELLSSHP_DIR)
@@ -452,45 +452,50 @@ def RUN_import_csv(data=True,
     print (f"Importing data to {C.OWI_DOWNLOAD_DB_NAME}")
     with c4db(db_name=C.OWI_DOWNLOAD_DB_NAME, commit=True) as db:
         
-        # if create: 
-        #     print (f"creating tables, constraints, and views from {C.OWI_DB_SCHEMA}")
-        #     execute_statements_from_file(db, C.OWI_DB_SCHEMA)
-        #
+        if create: 
+            print (f"creating tables, constraints, and views from {C.OWI_DB_SCHEMA}")
+            execute_statements_from_file(db, C.OWI_DB_SCHEMA)
 
         if C.OWI_SCHEMA_HAS_FKwellid_CONSTRAINTS:
             db.query('PRAGMA foreign_keys = False')
  
-        # if data: 
-        #     C4.delete_table_data(db, 'data')
-        #     C4.import_data_from_csv( db, C.OWI_SCHEMA_HAS_FKwellid_CONSTRAINTS)
-        #     db.commit_db()
-        #
-        # if locs and C.OWI_SCHEMA_HAS_LOCS: 
-        #     C4.delete_table_data(db,'locs')
-        #     if not C4.import_locs_from_csv(db, C.OWI_SCHEMA_HAS_FKwellid_CONSTRAINTS):
-        #         C4.import_cwi_locs(db)
-        #     db.commit_db()
-        #
-        # if C.OWI_SCHEMA_HAS_WELLID: # and not C.OWI_SCHEMA_HAS_FKwellid_CONSTRAINTS:
-        #     C4.populate_wellid_and_index(db, C.OWI_SCHEMA_HAS_LOCS)
-        #     db.commit_db()
-        #
-        #
-        # if C.OWI_REFORMAT_UNIQUE_NO:
-        #     if data:
-        #         db.update_unique_no_from_wellid('c4ix')
-        #         db.commit_db()
-        #     if locs and C.OWI_SCHEMA_HAS_LOCS:
-        #         db.update_unique_no_from_wellid('c4locs')
-        #         db.commit_db()
+        if data: 
+            C4.delete_table_data(db, 'data')
+            C4.import_data_from_csv( db, C.OWI_SCHEMA_HAS_FKwellid_CONSTRAINTS)
+            db.commit_db()
+        
+        if locs and C.OWI_SCHEMA_HAS_LOCS: 
+            C4.delete_table_data(db,'locs')
+            if not C4.import_locs_from_csv(db, C.OWI_SCHEMA_HAS_FKwellid_CONSTRAINTS):
+                C4.import_cwi_locs(db)
+            db.commit_db()
+        
+        if C.OWI_SCHEMA_HAS_WELLID:
+            C4.populate_wellid_and_index(db, C.OWI_SCHEMA_HAS_LOCS)
+            db.commit_db()
+        
+        
+        if C.OWI_REFORMAT_UNIQUE_NO:
+            """ Removes leading 0's from identifiers in c4ix.UNIQUE_NO and
+                c4locs.UNIQUE_NO.  This is really optional.
+            """
+            print (f"OWI_REFORMAT_UNIQUE_NO: {C.OWI_REFORMAT_UNIQUE_NO}, data:{data}, locs:{locs}")
+            if data:
+                db.update_unique_no_from_wellid('c4ix')
+                db.commit_db()
+            if locs and C.OWI_SCHEMA_HAS_LOCS:
+                db.update_unique_no_from_wellid('c4locs')
+                db.commit_db()
  
         if C.OWI_SCHEMA_IDENTIFIER_MODEL == 'MNU':
-            #execute_statements_from_file(db, C.OWI_MNU_INSERT)
-            execute_statements_from_file(db, C.OWI_MNU_VIEWS)
+            for sqlfile in C.OWI_MNU_VIEWS:
+                execute_statements_from_file(db, sqlfile)
+            for sqlfile in C.OWI_MNU_INSERT:
+                execute_statements_from_file(db, sqlfile)
         
-        if C.OWI_SCHEMA_HAS_FKwellid_CONSTRAINTS and C.OWI_SCHEMA_HAS_LOCS:
-            C4.append_c4locs_to_c4ix(db)
-            db.commit_db()
+        # if C.OWI_SCHEMA_HAS_FKwellid_CONSTRAINTS and C.OWI_SCHEMA_HAS_LOCS:
+        #     C4.append_c4locs_to_c4ix(db)
+        #     db.commit_db()
             
         if C.OWI_SCHEMA_HAS_FKwellid_CONSTRAINTS:
             db.query('PRAGMA foreign_keys = True')
