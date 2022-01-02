@@ -43,31 +43,37 @@ CREATE VIEW v1ids AS
     WHERE sMNU = 1
 ;
 
--- Cross reference map from Multi-well identifiers to Individual well
--- identifiers.  List multi-well identifiers next to each of their
--- individual well identifiers, and also show the join type (as JMNU)
--- and the ID_TYPE and ID_PROG of each identifier.
-CREATE VIEW v1id_mxref AS -- mx: multi-well x-references
-SELECT M.wellid AS Mwellid, M.identifier AS Midentifier, 
-       X.MNU AS MNU, 
-       I.identifier AS Iidentifier, I.wellid AS Iwellid, 
-       M.ID_TYPE AS MID_TYPE, M.ID_PROG AS MID_PROG,
-       I.ID_TYPE AS IID_TYPE, I.ID_PROG AS IID_PROG
+-- Cross reference map from Well Set identifiers to Individual Well
+-- identifiers.  Lists Well Set identifiers next to each of their
+-- individual well identifiers,
+-- and the ID_TYPEs and ID_PROGs of all identifiers.
+CREATE VIEW v1idsets AS -- mx: multi-well x-references
+SELECT M.wellid AS Mwellid, 
+       M.identifier AS Midentifier, 
+       M.ID_TYPE AS MID_TYPE, 
+       M.ID_PROG AS MID_PROG,
+       I.identifier AS identifier, 
+       I.wellid AS wellid, 
+       I.ID_TYPE AS ID_TYPE, 
+       I.ID_PROG AS ID_PROG
 FROM o1id M
 LEFT JOIN o1id X
   ON M.identifier = X.identifier
 LEFT JOIN o1id I
   ON X.wellid = I.wellid
 WHERE M.MNU IN (2,3)
-  AND X.MNU IN (4,5)
+  AND X.MNU = 9
+  AND M.sMNU=1
   AND I.sMNU=1
-ORDER BY M.identifier, I.wellid;
+ORDER BY M.identifier, I.wellid
+;
 
+-- views of tables that expose the sMNU values
 CREATE VIEW vo1ix AS
 SELECT
     A.rowid,
     A.wellid,
-    S.UNIQUE_NO,
+    S.IDENTIFIER,
     A.COUNTY_C,
     A.WELLNAME,
     A.TOWNSHIP,
@@ -124,7 +130,7 @@ CREATE VIEW vo1ad AS
 SELECT
     A.rowid,
     A.wellid,
-    S.UNIQUE_NO,
+    S.IDENTIFIER,
     A.NAME,
     A.ADDTYPE_C,
     A.HOUSE_NO,
@@ -146,7 +152,7 @@ CREATE VIEW vo1an AS
 SELECT
     A.rowid,
     A.wellid,
-    S.UNIQUE_NO,
+    S.IDENTIFIER,
     A.C5AN_SEQ_NO,
     A.AZIMUTH,
     A.INCLIN,
@@ -160,7 +166,7 @@ CREATE VIEW vo1c1 AS
 SELECT
     A.rowid,
     A.wellid,
-    S.UNIQUE_NO,
+    S.IDENTIFIER,
     A.DRILL_METH,
     A.DRILL_FLUD,
     A.HYDROFRAC,
@@ -206,7 +212,7 @@ CREATE VIEW vo1c2 AS
 SELECT
     A.rowid,
     A.wellid,
-    S.UNIQUE_NO,
+    S.IDENTIFIER,
     A.CONSTYPE,
     A.FROM_DEPTH,
     A.TO_DEPTH,
@@ -225,7 +231,7 @@ CREATE VIEW vo1pl AS
 SELECT
     A.rowid,
     A.wellid,
-    S.UNIQUE_NO,
+    S.IDENTIFIER,
     A.PUMPTESTID,
     A.TEST_DATE,
     A.START_MEAS,
@@ -241,7 +247,7 @@ CREATE VIEW vo1rm AS
 SELECT
     A.rowid,
     A.wellid,
-    S.UNIQUE_NO,
+    S.IDENTIFIER,
     A.SEQ_NO,
     A.REMARKS
 FROM c4rm A
@@ -253,7 +259,7 @@ CREATE VIEW vo1st AS
 SELECT
     A.rowid,
     A.wellid,
-    S.UNIQUE_NO,
+    S.IDENTIFIER,
     A.DEPTH_TOP,
     A.DEPTH_BOT,
     A.DRLLR_DESC,
@@ -272,7 +278,7 @@ CREATE VIEW vo1wl AS
 SELECT
     A.rowid,
     A.wellid,
-    S.UNIQUE_NO,
+    S.IDENTIFIER,
     A.MEAS_TYPE,
     A.MEAS_DATE,
     A.MEAS_TIME,
@@ -293,7 +299,7 @@ CREATE VIEW vo1locs AS
 SELECT
     A.rowid,
     A.wellid,
-    S.UNIQUE_NO,
+    S.IDENTIFIER,
     A.CWI_loc,
     A.COUNTY_C,
     A.UNIQUE_NO,

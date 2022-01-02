@@ -53,8 +53,7 @@ There are sometimes recent well records found in the shape files used to fill
 the c4locs table that are not yet in c4ix or c4id.  These Recent records have 
 to be appended to c4ix when Foreign Keys are implemented, because c4locs.wellid 
 references c4ix.wellid. Why does this matter here?  When identifiers are added 
-to c4id from c4ix, their origin is recorded by setting c4id.ID_PROG='c4ix';
-when their origin is c4locs, then we set c4id.ID_PROG='c4locs'. 
+to c4id from c4ix, their origin is recorded by setting c4id.ID_TYPE='c4ix'.
 
 c4.4.0 version:
     - Contains the c4 data tables
@@ -84,27 +83,21 @@ http://mgsweb2.mngs.umn.edu/cwi_doc/cwidoc.htm
 https://www.sqlite.org
 */
 
-update c4id
-    set MNU = 0, sMNU = 0
-;
+-- Create a table for identifying and resolving wrong or complex relationships
+-- 
+create table o1id_match (
+    rowid       INTEGER PRIMARY KEY NOT NULL,
+    wellid1     INTEGER NOT NULL,
+    wellid2     INTEGER,
+	identifier1 TEXT,
+	identifier2 TEXT,
+	mmid        INTEGER,
+	mexplain    TEXT,
+    mplan       TEXT,
+	mresolved	INTEGER,
+	mremark 	TEXT
+);
 
-update c4id
-    set MNU = 1
-    where ID_PROG in ('MNUNIQ','WMWSR','WSERIES')
-;
-
--- Remove records from c4id where the IDENTIFIER is null.
-Delete from c4id 
-where IDENTIFIER is Null;
-;
-
--- Remove identifiers from c4id where the identifier is equivalent to the wellid. 
--- The wellid's should be found in c4ix, and will later be imported to o1id as
--- identifiers along with all of the other wellids in c4ix.
-Delete from c4id 
-where MNU = 1
-  and cast(wellid as text) = IDENTIFIER 
-;
 
 -- Queries on c4id & c4ix to run before modifying c4id or filling o1id.
 -- Assumes that c4id.MNU has been set to (0,1).
@@ -135,7 +128,7 @@ where MNU = 1
 -- ;
 --
 -- 1.2 set mexplain in c4id
-update c4id set mexplain='C4ID_KNOWN_XREFS', MNU=11
+update c4id set  mexplain='C4ID_KNOWN_XREFS', mmid=11, MNU=11
 where rowid in ( 
     select A.rowid  
     from c4id A
@@ -151,19 +144,20 @@ where rowid in (
 ;
 
 -- 1.3 fill o1id_match  -- 87 rows
-insert into o1id_match (wellid1, identifier1, wellid2, identifier2, mexplain, mplan, mresolved)
+insert into o1id_match (wellid1, identifier1, wellid2, identifier2, 
+                        mexplain, mplan, mmid, mresolved)
 select A.wellid as wellid1, A.identifier as identifier1,  
        B.wellid as wellid1, B.identifier as identifier2,  
       'C4ID_KNOWN_XREFS' as mexplain,
-      'MNU=11, MERGE id2 INTO id1' as mplan,
-      0 as mresolved 
+      'MERGE id2 INTO id1' as mplan,
+       11 as mmid, 0 as mresolved 
 from c4id A
 left join c4id B
   on cast(A.wellid as text) = B.identifier
   and A.MNU in(1,11) and B.MNU in(1,11)  
 left join c4id C
   on cast(B.wellid as text) = C.identifier
-  and B.MNU in(1,11) and C.MNU in(1,11)  
+  and B.mmid = 11  and C.mmid = 11 
 where A.wellid <= B.wellid
   and B.wellid != C.wellid
   and A.identifier = C.identifier
@@ -185,7 +179,7 @@ where A.MNU in (1,12)
 
 -- 12.2 set mexplain in c4id
 --select * from c4id
-update c4id set mexplain='C4ID_UNRESOLVED_MERGES', MNU=12
+update c4id set mexplain='C4ID_UNRESOLVED_MERGES', mmid=12, MNU=12
 where rowid in ( 
     select A.rowid  
     from c4id A
@@ -198,13 +192,13 @@ where rowid in (
 --      order by b.unique_no
 );    
 -- 12.3  insert into o1id_match  --  
-insert into o1id_match (wellid1, identifier1, mexplain, mplan, mresolved)
+insert into o1id_match (wellid1, identifier1, mexplain, mplan, mmid, mresolved)
 select A.wellid as wellid1, A.identifier as identifier1, 
       'C4ID_UNRESOLVED_MERGES' as mexplain,
-      'MNU=12, MANUAL CHECK' as mplan,
-      0 as mresolved 
+      'MANUAL CHECK' as mplan,
+       12 as mmid, 0 as mresolved 
 from c4id A
-where A.MNU=12
+where A.mmid=12
 ;
 
 -- ========================================================================= --
@@ -223,7 +217,7 @@ where A.MNU in (1,13)
 
 -- 13.2 set mexplain in c4id
 --select * from c4id
-update c4id set mexplain='C4ID_UNRESOLVED_MERGES_WMWSR', MNU=13
+update c4id set mexplain='C4ID_UNRESOLVED_MERGES_WMWSR', mmid=13, MNU=13
 where rowid in ( 
     select A.rowid  
     from c4id A
@@ -233,14 +227,13 @@ where rowid in (
       and (A.mexplain is null or A.mexplain='C4ID_UNRESOLVED_MERGES_WMWSR')
       and A.id_prog = 'WMWSR'
       and B.wellid is not null
---      order by B.unique_no
 );    
 -- 13.3  insert into o1id_match  --  
-insert into o1id_match (wellid1, identifier1, mexplain, mplan, mresolved)
+insert into o1id_match (wellid1, identifier1, mexplain, mplan, mmid, mresolved)
 select A.wellid as wellid1, A.identifier as identifier1, 
       'C4ID_UNRESOLVED_MERGES_WMWSR' as mexplain,
-      'MNU=13, MANUAL CHECK' as mplan,
-      0 as mresolved 
+      'MANUAL CHECK' as mplan,
+       13 as mmid, 0 as mresolved 
 from c4id A
 where A.MNU=13
 ;
@@ -261,7 +254,7 @@ where A.MNU in (1,14)
 
 -- 14.2 set mexplain in c4id
 --select * from c4id
-update c4id set mexplain='C4ID_UNRESOLVED_MERGES_WSERIES', MNU=14
+update c4id set mexplain='C4ID_UNRESOLVED_MERGES_WSERIES', mmid=14, MNU=14
 where rowid in ( 
     select A.rowid  
     from c4id A
@@ -274,20 +267,20 @@ where rowid in (
 --      order by B.unique_no
 );    
 -- 14.3  insert into o1id_match  --  
--- insert into o1id_match (wellid1, identifier1, mexplain, mplan, mresolved)
+insert into o1id_match (wellid1, identifier1, mexplain, mplan, mmid, mresolved)
 select A.wellid as wellid1, A.identifier as identifier1, 
       'C4ID_UNRESOLVED_MERGES_WSERIES' as mexplain,
       'MNU=14, MANUAL CHECK' as mplan,
-      0 as mresolved 
+       14 as mmid, 0 as mresolved 
 from c4id A
 where A.MNU=14
 ;
 
 
 -- ========================================================================= --
--- 2) C4ID_BAD_LINKS_OR_REDUNDANT_WELLS : 37 records.
+-- 15) C4ID_BAD_LINKS_OR_REDUNDANT_WELLS : 37 records.
 -- These cannot be deleted because the corrupt identifiers are W-numbers and this is thier only occurance.
--- 2.1 exploration
+-- 15.1 exploration
 -- select A.wellid as wellid1, A.identifier as identifier1, 
 --        B.wellid as wellid2, B.identifier as identifier2,
 --       'C4ID_BAD_LINKS_OR_REDUNDANT_WELLS' as mexplain,
@@ -302,8 +295,8 @@ where A.MNU=14
 --   and A.identifier like('%W%')
 -- ;
 
--- 2.2 set mexplain in c4id  -- 74 rows
-update c4id set mexplain='C4ID_BAD_LINKS_OR_REDUNDANT_WELLS', MNU=9
+-- 15.2 set mexplain in c4id  -- 74 rows
+update c4id set mexplain='C4ID_BAD_LINKS_OR_REDUNDANT_WELLS', mmid=15, MNU=15
 where rowid in (
 select A.rowid 
 from c4id A
@@ -315,27 +308,28 @@ where
   and A.identifier like('%W%'))
 ;
 
--- 2.3 insert rows in o1id_match -- 37 rows
-insert into o1id_match (wellid1, identifier1, wellid2, identifier2, mexplain, mplan, mresolved)
+-- 15.3 insert rows in o1id_match -- 37 rows
+insert into o1id_match (wellid1, identifier1, wellid2, identifier2, 
+                        mexplain, mplan, mmid, mresolved)
 select A.wellid as wellid1, A.identifier as identifier1, 
        B.wellid as wellid2, B.identifier as identifier2,
       'C4ID_BAD_LINKS_OR_REDUNDANT_WELLS' as mexplain,
       'MNU=9, MANUAL FIX' as mplan,
-      0 as mresolved 
+       A.mmid, 0 as mresolved 
 from c4id A
 left join c4id B
   on A.identifier = B.identifier
-  and A.MNU=9 and B.MNU=9 
+  and A.mmid=15 and B.mmid=15 
 where 
   A.wellid < B.wellid
   and A.identifier like('%W%')
 ;
 
 -- ========================================================================= --
--- 3) 'C4ID_1WELL_ASSIGNED_2HNUMBERS' -- 25 records
+-- 16) 'C4ID_1WELL_ASSIGNED_2HNUMBERS' -- 25 records
 -- Multiple H-numbers assigned to One construction number   
 --
--- 3.1 C4ID_1WELL_ASSIGNED_2HNUMBERS - Exploration
+-- 16.1 C4ID_1WELL_ASSIGNED_2HNUMBERS - Exploration
 -- select A.wellid as wellid1, A.identifier as identifier1, 
 --        B.wellid as wellid2, B.identifier as identifier2,
 --       'C4ID_1WELL_ASSIGNED_2HNUMBERS' as mexplain,
@@ -355,8 +349,8 @@ where
 --   and B.identifier like ('H%')
 -- order by A.wellid;
 --
--- 3.2 C4ID_1WELL_ASSIGNED_2HNUMBERS update c4id  -- 42 rows
-update c4id set mexplain='C4ID_1WELL_ASSIGNED_2HNUMBERS', MNU=8
+-- 16.2 C4ID_1WELL_ASSIGNED_2HNUMBERS update c4id  -- 42 rows
+update c4id set mexplain='C4ID_1WELL_ASSIGNED_2HNUMBERS', mmid = 16, MNU=16
 where rowid in (
    select A.rowid
    from c4id A
@@ -372,32 +366,30 @@ where rowid in (
       and B.identifier like ('H%'))  
 ;
 
--- 3.3  insert into o1id_match  -- 25 rows
-insert into o1id_match (wellid1, identifier1 ,wellid2, identifier2, mexplain, mplan, mresolved)
+-- 16.3  insert into o1id_match  -- 25 rows
+insert into o1id_match (wellid1, identifier1 ,wellid2, identifier2, mexplain, mplan, mmid, mresolved)
 select A.wellid as wellid1, A.identifier as identifier1, 
        B.wellid as wellid2, B.identifier as identifier2,
       'C4ID_1WELL_ASSIGNED_2HNUMBERS' as mexplain,
-      'MNU=8, MANUAL FIX' as mplan,
-      0 as mresolved 
-      --,X.WELLID,Y.WELLID,X.USE_C, Y.USE_C
+      'MANUAL FIX' as mplan,
+       16 as mmid, 0 as mresolved 
 from c4id A
 left join c4id B
   on A.wellid = B.wellid
-  and A.MNU=8 and B.MNU=8 
 left join c4ix X
   on X.wellid = A.wellid
 left join c4ix Y
   on Y.wellid = B.wellid
-where A.identifier < B.identifier 
+where A.mmid=16 and B.mmid=16
+  and A.identifier < B.identifier 
   and A.identifier like ('H%')
   and B.identifier like ('H%')
---order by A.wellid
 ;
 
 
--- 4) C4ID_H_IS_MULTY_OR_BAD_REF  -- 3473 records
+-- 17) C4ID_H_IS_MULTY_OR_BAD_REF  -- 3473 records
 --    One H number is assigned to multiple wellids
--- 4.1 Exploration
+-- 17.1 Exploration
 --select A.wellid as wellid1, A.identifier as identifier1, 
 --       B.wellid as wellid2, B.identifier as identifier2,
 --      'C4ID_H_IS_MULTY_OR_BAD_REF' as mexplain,
@@ -412,8 +404,8 @@ where A.identifier < B.identifier
 --  and A.identifier like('%H%')
 --;
 --
--- 4.2  update c4id  -- 1803 rows
-update c4id set mexplain='C4ID_H_IS_MULTY_OR_BAD_REF', MNU=7
+-- 17.2  update c4id  -- 1803 rows
+update c4id set mexplain='C4ID_H_IS_MULTY_OR_BAD_REF', mmid = 17, MNU=9
 where rowid in (
     select A.rowid 
     from c4id A
@@ -425,57 +417,39 @@ where rowid in (
       and A.identifier like('%H%')
 );
 
--- 4.3  insert into o1id_match  --  1803 rows
-insert into o1id_match (wellid1, identifier1, mexplain, mplan, mresolved)
+-- 17.3  insert into o1id_match  --  1803 rows
+insert into o1id_match (wellid1, identifier1, mexplain, mplan, mmid, mresolved)
 select A.wellid as wellid1, A.identifier as identifier1, 
       'C4ID_H_IS_MULTY_OR_BAD_REF' as mexplain,
-      'MNU=7, ASSUME_MULTIWELL_H' as mplan,
-      0 as mresolved 
+      'ASSUME_MULTIWELL_H' as mplan,
+       17 as mmid, 0 as mresolved 
 from c4id A
-where A.MNU=7
+where A.mmid=17
 ;
  
 -- -- Verify that there are no more multiwell references in c4id
 -- -- should return count=0. Depends on prior queries changing the MNU number from 1.
 -- select count(A.rowid)  
--- from c4id A
--- left join c4id B
---   on A.identifier = B.identifier
---   and A.MNU=1 and B.MNU=1 
--- where 
---   A.wellid < B.wellid;
---   
--- -- summarize results:
--- select mexplain, MNU, count(*) from c4id group by mexplain, MNU;
--- select mexplain, mplan, count(*) from o1id_match group by mexplain, mplan;
--- select MNU, count(*) from o1id group by MNU;
+--  from c4id A
+--  left join c4id B
+--    on A.identifier = B.identifier
+--    and A.MNU=1 and B.MNU=1 
+--  where 
+--    A.wellid < B.wellid
+-- ;
 -- 
--- 5) Begin insertion of records into o1id
--- 5.1 insert identifiers from c4ix.  --562489 records
-Insert into o1id (wellid, RELATEID, IDENTIFIER, ID_TYPE, ID_PROG, MNU, sMNU)
-    select wellid, RELATEID, UNIQUE_NO, 'c4ix', 'MNUNIQ', 1, 1
-    from c4ix
-;
+-- -- -- summarize results:
+--  select mmid, mexplain, MNU, count(*) from c4id group by mmid, mexplain, MNU order by mmid, mexplain;
+--  select mmid, mexplain, mplan, count(*) from o1id_match group by mmid, mexplain, mplan, order by mmid;
 
--- 5.2 append records from c4locs (may or may not have records, depends on state of source)
--- select CWI_loc, count(*) from c4locs group by CWI_loc;
-Insert into o1id (wellid, RELATEID, IDENTIFIER, ID_TYPE, ID_PROG, MNU, sMNU)
-    select L.wellid, L.RELATEID, L.UNIQUE_NO, L.CWI_loc, 'MNUNIQ', 1, 1
-    from c4locs L
-    left join c4ix X
-      on L.wellid = X.wellid
-    where X.wellid is NULL
-;
-
--- 5.3 append strictly normal MNU records from c4id: where MNU=1 and mexplain is NULL. -- 49699 rows
+-- Finally
+-- Append strictly normal MNU records from c4id: where MNU=1 and mexplain is NULL. -- 49699 rows
 Insert into o1id (wellid, RELATEID, IDENTIFIER, ID_TYPE, ID_PROG, MNU, sMNU)
     select wellid, RELATEID, IDENTIFIER, ID_TYPE, ID_PROG, MNU, sMNU
     from c4id
-    where MNU=1 and mexplain is null
-;
+    where MNU=1 and mmid is null and mexplain is null
+; 
 
---select id_type, id_prog, MNU, sMNU, count(*) from o1id group by id_type, id_prog, MNU, sMNU;
-
-
-
+-- -- summarize results:
+-- select MNU, count(*) from o1id group by MNU;
 

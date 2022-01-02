@@ -131,21 +131,24 @@ class OWI_version_40(OWI_base):
     OWI_DB_VERSION = "o1.1.0"
     OWI_DB_SCHEMA  = "../sql/owischema_o1.1.0.sql"
     OWI_MNU_INSERT = ["../sql/insert_c4locs_to_c4ix.sql",
-                      "../sql/mnu_insert_o1.1.0.sql"]
+                      "../sql/mnu1_update_o1.1.0.sql",
+                      "../sql/mnu2_analyze_faults_o1.1.0.sql",
+                      "../sql/mnu3_resolve_faults_o1.1.0.sql"
+                      ]
     OWI_MNU_VIEWS = ["../sql/mnu_views_o1.1.0.sql"]
     OWI_DOWNLOAD_DB_NAME = f"{OWIfiles().OWI_DOWNLOAD_DIR}/OWI{OWI_SCHEMA_VERSION}{OWI_SCHEMA_MINOR_VERSION}.sqlite"
     # OWI_DB_SCHEMA  = "../sql/cwischema_c4.4.0.sql"
     # OWI_MNU_INSERT = "../sql/mnu_insert_c4.4.0.sql"
 
-class OWI_version_41(OWI_version_40):
-    """ Iteration 1 of MNU identifier model: Has Unique constraints """
-    OWI_SCHEMA_VERSION = 4
-    OWI_SCHEMA_MINOR_VERSION = 1
-    OWI_DB_VERSION = "o1.1.1"
-    OWI_MNU_INSERT = ["../sql/insert_c4locs_to_c4ix.sql",
-                      "../sql/mnu_insert_o1.1.1.sql"]
-    OWI_MNU_VIEWS = ["../sql/mnu_views_o1.1.1.sql"]
-    OWI_DOWNLOAD_DB_NAME = f"{OWIfiles().OWI_DOWNLOAD_DIR}/OWI{OWI_SCHEMA_VERSION}{OWI_SCHEMA_MINOR_VERSION}.sqlite"
+# class OWI_version_41(OWI_version_40):
+#     """ Iteration 1 of MNU identifier model: Has Unique constraints """
+#     OWI_SCHEMA_VERSION = 4
+#     OWI_SCHEMA_MINOR_VERSION = 1
+#     OWI_DB_VERSION = "o1.1.1"
+#     OWI_MNU_INSERT = ["../sql/insert_c4locs_to_c4ix.sql",
+#                       "../sql/mnu1_update_o1.1.0.sql"]
+#     OWI_MNU_VIEWS = ["../sql/mnu_views_o1.1.1.sql"]
+#     OWI_DOWNLOAD_DB_NAME = f"{OWIfiles().OWI_DOWNLOAD_DIR}/OWI{OWI_SCHEMA_VERSION}{OWI_SCHEMA_MINOR_VERSION}.sqlite"
 
 class SWUDS_version_0:
     """ Clone of SWUDS download file, with only addition of id cols & Unique_no. """

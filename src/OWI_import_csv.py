@@ -318,56 +318,6 @@ class cwi_csvupdate():
             db.cur.executemany(insert, shp_locs_generator(shpname))
             print (f'completed import of shapefile {shpname}')
 
-    # def append_c4locs_to_c4ix(self, db):        
-    #     """
-    #     Append new records in c4locs to c4ix.
-    #
-    #     The shapefiles may contain well records not yet entered in the cwi data 
-    #     tables. These records are identified because they have wellid values 
-    #     missing from c4ix. 
-    #
-    #     These records must be appended to c4ix in order to meet Foreign Key
-    #     constraints on wellid (c4locs.wellid references c4ix.wellid).
-    #
-    #     No effort is made to add information from the new c4locs records to
-    #     any c4 data tables other than c4ix.
-    #     """
-    #     print ('Appending Recent records in c4locs to c4ix')
-    #     i = """Insert into c4ix (
-    #         wellid, RELATEID, COUNTY_C, UNIQUE_NO, WELLNAME,
-    #         TOWNSHIP, RANGE, RANGE_DIR, SECTION, SUBSECTION, MGSQUAD_C,
-    #         ELEVATION, ELEV_MC,
-    #         STATUS_C, USE_C,
-    #         LOC_MC, LOC_SRC, DATA_SRC,
-    #         DEPTH_DRLL, DEPTH_COMP, DATE_DRLL,
-    #         CASE_DIAM, CASE_DEPTH, GROUT,
-    #         POLLUT_DST, POLLUT_DIR, POLLUT_TYP,
-    #         STRAT_DATE, STRAT_UPD, STRAT_SRC, STRAT_GEOL, STRAT_MC,
-    #         DEPTH2BDRK, FIRST_BDRK, LAST_STRAT, OHTOPUNIT, OHBOTUNIT,
-    #         AQUIFER, CUTTINGS, CORE, BHGEOPHYS,
-    #         GEOCHEM, WATERCHEM, OBWELL, SWL, DH_VIDEO,
-    #         INPUT_SRC, UNUSED, ENTRY_DATE, UPDT_DATE)
-    #     SELECT
-    #         L.wellid, L.RELATEID, L.COUNTY_C, L.UNIQUE_NO, L.WELLNAME,
-    #         L.TOWNSHIP, L.RANGE, L.RANGE_DIR, L.SECTION, L.SUBSECTION, L.MGSQUAD_C,
-    #         L.ELEVATION, L.ELEV_MC,
-    #         L.STATUS_C, L.USE_C,
-    #         L.LOC_MC, L.LOC_SRC, L.DATA_SRC,
-    #         L.DEPTH_DRLL, L.DEPTH_COMP, L.DATE_DRLL,
-    #         L.CASE_DIAM, L.CASE_DEPTH, L.GROUT,
-    #         L.POLLUT_DST, L.POLLUT_DIR, L.POLLUT_TYP,
-    #         L.STRAT_DATE, L.STRAT_UPD, L.STRAT_SRC, L.STRAT_GEOL, L.STRAT_MC,
-    #         L.DEPTH2BDRK, L.FIRST_BDRK, L.LAST_STRAT, L.OHTOPUNIT, L.OHBOTUNIT,
-    #         L.AQUIFER, L.CUTTINGS, L.CORE, L.BHGEOPHYS,
-    #         L.GEOCHEM, L.WATERCHEM, L.OBWELL, L.SWL, L.DH_VIDEO,
-    #         L.INPUT_SRC, L.UNUSED, L.ENTRY_DATE, L.UPDT_DATE
-    #     FROM c4locs L
-    #     LEFT JOIN c4ix X
-    #       ON L.wellid = X.wellid
-    #       WHERE X.wellid IS NULL;""".replace('                ','')
-    #     db.query(i)
-    #
-
     def populate_wellid_and_index(self, db, haslocs):
         """
         Set the wellid values in all data tables.
@@ -395,8 +345,6 @@ class cwi_csvupdate():
         only data affected in Dec 2021 was a single address with encoded '1/2' 
         symbol.
         """
-        # fsrc  = '/home/bill/R/cwi/cwidata_csv/c4ad_raw.csv'
-        # fdest = '/home/bill/R/cwi/cwidata_csv/c4ad.csv'
         try:
             with open(fname, 'rb') as source_file:
                 contents = source_file.read()
@@ -404,6 +352,7 @@ class cwi_csvupdate():
                 dest_file.write(contents.decode('ascii','ignore').encode('ascii','ignore'))
             return True
         except Exception as e:
+            print (f"Error forcing {fname} to ASCII")
             print (e)
             return False
 

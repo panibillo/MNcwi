@@ -204,7 +204,8 @@ CREATE TABLE c4id (
     ID_PROG     TEXT,
     MNU         INTEGER NOT NULL DEFAULT (0),
     sMNU        INTEGER NOT NULL DEFAULT (0),
-    mexplain    TEXT,
+	mmid        INTEGER,
+	mexplain    TEXT,
     mplan       TEXT,
     mresolved   INTEGER,
 	mremark 	TEXT
@@ -219,8 +220,9 @@ CREATE TABLE o1id (
     ID_PROG     TEXT,
     MNU         INTEGER NOT NULL DEFAULT (0),
     sMNU        INTEGER NOT NULL DEFAULT (0),
+	mmid        INTEGER,
 	mexplain    TEXT,
-	mplan       TEXT,
+    mplan       TEXT,
 	mresolved	INTEGER,
 	mremark 	TEXT,
     CONSTRAINT fk_o1id_wellid
@@ -259,17 +261,6 @@ CREATE UNIQUE INDEX ux_o1id_id_identifier_MNU
     WHERE  MNU IN (1,2,3,4,5)
 ;
 
-create table o1id_match (
-    rowid       INTEGER PRIMARY KEY NOT NULL,
-    wellid1     INTEGER NOT NULL,
-    wellid2     INTEGER,
-	identifier1 TEXT,
-	identifier2 TEXT,
-	mexplain    TEXT,
-	mplan       TEXT,
-	mresolved	INTEGER,
-	mremark 	TEXT
-);
 
 CREATE TABLE c4pl (
     rowid       INTEGER PRIMARY KEY NOT NULL,
@@ -427,13 +418,3 @@ CREATE TABLE c4locs (
         ON DELETE RESTRICT
 );
 
-create table c4unresolved_merges(
-    rowid       INTEGER PRIMARY KEY NOT NULL,
-    wellid1     INTEGER NOT NULL,
-    wellid2     INTEGER,
-    unique_no1  TEXT,
-    unique_no2  TEXT,
-    resolved    TEXT DEFAULT 'NO',
-    CONSTRAINT un_c4unresolved_merge_wellids
-        UNIQUE (wellid1, wellid2),
-)
