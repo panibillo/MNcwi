@@ -83,22 +83,6 @@ http://mgsweb2.mngs.umn.edu/cwi_doc/cwidoc.htm
 https://www.sqlite.org
 */
 
--- Create a table for identifying and resolving wrong or complex relationships
--- 
-create table o1id_match (
-    rowid       INTEGER PRIMARY KEY NOT NULL,
-    wellid1     INTEGER NOT NULL,
-    wellid2     INTEGER,
-	identifier1 TEXT,
-	identifier2 TEXT,
-	mmid        INTEGER,
-	mexplain    TEXT,
-    mplan       TEXT,
-	mresolved	INTEGER,
-	mremark 	TEXT
-);
-
-
 -- Queries on c4id & c4ix to run before modifying c4id or filling o1id.
 -- Assumes that c4id.MNU has been set to (0,1).
 -- ========================================================================= --
@@ -427,8 +411,8 @@ from c4id A
 where A.mmid=17
 ;
  
--- -- Verify that there are no more multiwell references in c4id
--- -- should return count=0. Depends on prior queries changing the MNU number from 1.
+-- --18) Final check that there are no duplicate MNU identifiers in c4id
+-- --18.1) Exploration:  should return count=0. Depends on prior queries changing the MNU number from 1.
 -- select count(A.rowid)  
 --  from c4id A
 --  left join c4id B
@@ -441,6 +425,33 @@ where A.mmid=17
 -- -- -- summarize results:
 --  select mmid, mexplain, MNU, count(*) from c4id group by mmid, mexplain, MNU order by mmid, mexplain;
 --  select mmid, mexplain, mplan, count(*) from o1id_match group by mmid, mexplain, mplan, order by mmid;
+
+-- 18.2) Final cleanup to ensure compliance with UNIQUE constraints: o1id.wellid, o1id.IDENTIFIER
+update c4id set MNU=0, sMNU=0, mexplain ='C4ID_DUPLICATE_MNU_IDENTIFIER', mmid=18
+where rowid in (
+  select B.rowid
+    from c4id A
+    left join c4id B
+      on A.IDENTIFIER = B.IDENTIFIER
+    where A.MNU=1   
+      and B.MNU=1
+      and A.rowid < B.rowid
+  )
+;
+-- 18.3  insert into o1id_match  --   
+insert into o1id_match (wellid1, identifier1 ,wellid2, identifier2, mexplain, mplan, mmid, mresolved)
+select A.wellid as wellid1, A.identifier as identifier1, 
+       B.wellid as wellid2, B.identifier as identifier2,
+      'C4ID_DUPLICATE_MNU_IDENTIFIER' as mexplain,
+      'OMIT_RECORD2_FROM_o1id' as mplan,
+       18 as mmid, 1 as mresolved 
+from c4id A
+left join c4id B
+  on A.IDENTIFIER = B.IDENTIFIER
+where A.MNU=1   
+  and B.mmid=18
+;
+
 
 -- Finally
 -- Append strictly normal MNU records from c4id: where MNU=1 and mexplain is NULL. -- 49699 rows

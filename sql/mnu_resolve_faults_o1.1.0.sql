@@ -72,7 +72,7 @@ WHERE c.mexplain = 'C4ID_KNOWN_XREFS'
 INSERT INTO o1id(wellid, RELATEID, IDENTIFIER, ID_TYPE, ID_PROG,
   MNU, sMNU, mmid, mexplain, mremark)
 SELECT o.wellid1, c2.RELATEID, c2.IDENTIFIER, c2.ID_TYPE, c2.ID_PROG,
-       1 AS MNU, 0 AS sMNU, c2.mmid, c2.mexplain, 'unconfirmed. example merge' as mremark
+       12 AS MNU, 0 AS sMNU, c2.mmid, c2.mexplain, 'unconfirmed. example merge' as mremark
 FROM o1id_match o
 LEFT JOIN c4id c2
   ON o.identifier1 = c2.identifier

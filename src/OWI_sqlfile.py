@@ -32,6 +32,8 @@ def read_sql_file(sql_file):
 def execute_statements_from_file(db, sql_file):
     """
     Read and execute a series of statements from an sql statement file
+    
+    This method does not handle statements that fail; an error occurs.
     """
     print (f"execute_statements_from_file: {sql_file}")
     print (f"   into {db.db_name}")

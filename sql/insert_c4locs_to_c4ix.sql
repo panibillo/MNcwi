@@ -1,8 +1,30 @@
 /*
 Insert newer records from c4locs table into c4ix table.
+Identify the newer records by setting field c4ix.UNUSED = 'from c4locs'
+
+Apparently new records may be added to the GIS layers before they are added to 
+the CWI tables.  Here they are added only to the c4ix table, and no analysis
+is yet written to populate the other c4/c5 data tables.
+
+The number of newer records in c4locs is sometimes 0, and typically not too 
+large. 
+
+--   Running this insert multiple times should be harmless, but if it is desired
+-- to delete affected records from c4ix before running, then the ids have to 
+-- also be deleted from o1id first, becuase of the Foreign Key relationship.
+--   Run the following 2 queries in order. Both depend on identifying the  
+-- records using c4ix.UNUSED = 'from c4locs'. 
+DELETE FROM o1id 
+  WHERE wellid IN(
+    SELECT wellid 
+	FROM c4ix 
+	WHERE UNUSED = 'from c4locs')
+;
+
+DELETE from c4ix
+  WHERE UNUSED = 'from c4locs'
+;
 */
-
-
 Insert into c4ix (
     wellid, RELATEID, COUNTY_C, UNIQUE_NO, WELLNAME,
     TOWNSHIP, RANGE, RANGE_DIR, SECTION, SUBSECTION, MGSQUAD_C,
@@ -30,7 +52,7 @@ SELECT
     L.DEPTH2BDRK, L.FIRST_BDRK, L.LAST_STRAT, L.OHTOPUNIT, L.OHBOTUNIT,
     L.AQUIFER, L.CUTTINGS, L.CORE, L.BHGEOPHYS,
     L.GEOCHEM, L.WATERCHEM, L.OBWELL, L.SWL, L.DH_VIDEO,
-    L.INPUT_SRC, L.UNUSED, L.ENTRY_DATE, L.UPDT_DATE
+    L.INPUT_SRC, 'from c4locs' as UNUSED, L.ENTRY_DATE, L.UPDT_DATE
 FROM c4locs L
 LEFT JOIN c4ix X
   ON L.wellid = X.wellid

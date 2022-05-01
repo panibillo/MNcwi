@@ -59,7 +59,7 @@ def download_cwi_from_ftp( ftpaddr,
         log.debug(msg='ftp Log-in successful')
         
         # Get the modify dates of the files on the ftp site. Formatted as integer, e.g. 20170521081548
-        dict_ftp_file_modify_times = {f[0]:int(float(f[1].get('modify'))) for f in ftp.mlsd(path=ftppath)}
+        dict_ftp_file_modify_times = {f[0].lower():int(float(f[1].get('modify'))) for f in ftp.mlsd(path=ftppath)}
     
         for fname in downloadfiles:
             if 'locs' in fname: 
@@ -70,7 +70,7 @@ def download_cwi_from_ftp( ftpaddr,
                 # Compare file times to see if a fresh download is needed
                 mtime = datetime.datetime.fromtimestamp( os.path.getmtime(destfile) )
                 desttime = int(mtime.strftime('%Y%m%d%H%M%S'))
-                if dict_ftp_file_modify_times[fname] < desttime:
+                if dict_ftp_file_modify_times[fname.lower()] < desttime:
                     log.info(f'{fname} is up to date. Download skipped.')
                     continue
                 
@@ -78,8 +78,14 @@ def download_cwi_from_ftp( ftpaddr,
             print( f"downloading {fname} ...", end='' )
             
             with open(destfile, 'wb') as localfile:
-                ftp.retrbinary('RETR '+ftppath+'/'+fname, localfile.write, 1024 )
-            
+                try:
+                    ftp.retrbinary('RETR '+ftppath+'/'+fname, localfile.write, 1024 )
+                except Exception as e:
+                    lines = ftp.retrlines('LIST')
+                    print (lines)
+                    print (f"ERROR downloading {ftppath+'/'+fname} to {destfile}")
+                    raise e
+                    
             duration = (time.time()-start)/60.0
             print( f"  ... DONE. completed in {duration:1.3f} minutes")
             rv.append (destfile)

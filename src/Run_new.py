@@ -24,4 +24,6 @@ from OWI_import_csv import RUN_import_csv, RUN_import_swuds
 
 RUN_download_cwi()
 RUN_import_csv()
+
+print ("/////////// DONE with Run_new.py ////////////")
 # RUN_import_swuds()

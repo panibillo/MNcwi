@@ -357,7 +357,9 @@ class cwi_csvupdate():
             return False
 
 def RUN_import_csv(data=True, 
-                   locs=True):
+                   locs=True,
+                   wellids=True,
+                   resume_MNU_at = 0):
     """ 
     Demonstrate full import from csv files. 
     Creates a new OWI.sqlite.  Does not update an existing OWI.sqlite
@@ -419,28 +421,34 @@ def RUN_import_csv(data=True,
                 C4.import_cwi_locs(db)
             db.commit_db()
         
-        if C.OWI_SCHEMA_HAS_WELLID:
-            C4.populate_wellid_and_index(db, C.OWI_SCHEMA_HAS_LOCS)
-            db.commit_db()
-        
-        
-        if C.OWI_REFORMAT_UNIQUE_NO:
-            """ Removes leading 0's from identifiers in c4ix.UNIQUE_NO and
-                c4locs.UNIQUE_NO.  This is really optional.
-            """
-            print (f"OWI_REFORMAT_UNIQUE_NO: {C.OWI_REFORMAT_UNIQUE_NO}, data:{data}, locs:{locs}")
-            if data:
-                db.update_unique_no_from_wellid('c4ix')
+        if wellids:
+            if C.OWI_SCHEMA_HAS_WELLID:
+                C4.populate_wellid_and_index(db, C.OWI_SCHEMA_HAS_LOCS)
                 db.commit_db()
-            if locs and C.OWI_SCHEMA_HAS_LOCS:
-                db.update_unique_no_from_wellid('c4locs')
-                db.commit_db()
+            
+            
+            if C.OWI_REFORMAT_UNIQUE_NO:
+                """ Removes leading 0's from identifiers in c4ix.UNIQUE_NO and
+                    c4locs.UNIQUE_NO.  This is really optional.
+                """
+                print (f"OWI_REFORMAT_UNIQUE_NO: {C.OWI_REFORMAT_UNIQUE_NO}, data:{data}, locs:{locs}")
+                if data:
+                    db.update_unique_no_from_wellid('c4ix')
+                    db.commit_db()
+                if locs and C.OWI_SCHEMA_HAS_LOCS:
+                    db.update_unique_no_from_wellid('c4locs')
+                    db.commit_db()
  
         if C.OWI_SCHEMA_IDENTIFIER_MODEL == 'MNU':
-            for sqlfile in C.OWI_MNU_VIEWS:
+            for sqlfile in C.OWI_MNU_INSERT[resume_MNU_at:]:
                 execute_statements_from_file(db, sqlfile)
-            for sqlfile in C.OWI_MNU_INSERT:
-                execute_statements_from_file(db, sqlfile)
+                # Resumat:
+                #       0: OWI_MNU_INSERT_LOCS = ["../sql/insert_c4locs_to_c4ix.sql",]
+                #       1: OWI_MNU_CLEAN_C4ID = ["../sql/mnu1_update_o1.1.0.sql",]
+                #       2: OWI_MNU_INIT_O1ID = ["../sql/mnu1_init_o1id_o1.1.0.sql",]
+                #       3: OWI_MNU_UPDATE_O1ID = ["../sql/mnu1_update_o1.1.0.sql",]
+                #       4: OWI_MNU_ANALYZE_O1ID = ["../sql/mnu2_analyze_faults_o1.1.0.sql",]
+                #       5: OWI_MNU_RESOLVE_O1ID = ["../sql/mnu3_resolve_faults_o1.1.0.sql",]
         
         # if C.OWI_SCHEMA_HAS_FKwellid_CONSTRAINTS and C.OWI_SCHEMA_HAS_LOCS:
         #     C4.append_c4locs_to_c4ix(db)
@@ -492,8 +500,11 @@ def RUN_import_swuds(create=False):
         import_swuds_full(db, csvname)
         
 if __name__ == '__main__':
-    RUN_import_csv()
+    RUN_import_csv(data=False, 
+                   locs=False,
+                   wellids = False,
+                   resume_MNU_at=4)
     #RUN_import_swuds(create=True)
             
-    print ('\n',r'\\\\\\\\\\\\\\\\\\ DONE //////////////////')    
+    print ('\n',r'\\\\\\\\\\\\\\\ DONE (OWI_import_csv.py) ///////////////')    
         

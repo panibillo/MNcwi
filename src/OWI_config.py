@@ -33,12 +33,15 @@ class OWIfiles:
     -   OWI_DOWNLOAD_LOGFILE  (log of download activity)
     -   cwi_info_csv.zip is conceived, but not yet produced by MGS.
     """
-    OWI_DOWNLOAD_FILES = [ 
-        "cwidata_csv.zip",
-        "cwilocs.zip",
-        "xcwiunlocs.zip",
-        #"cwi_info_csv.zip"
-    ]
+    CWI_DATA_CSV = "cwi_CSV.zip"   # formerly cwidata_csv.zip
+    CWI_LOCS = "cwilocs.zip"
+    CWI_UNLOCS = "xcwiunlocs.zip"
+    CWI_INFO = "cwi_info_csv.zip"
+    
+    OWI_DOWNLOAD_FILES = [CWI_DATA_CSV,
+                          CWI_LOCS, 
+                          CWI_UNLOCS
+                         ]
     if platform.system() == 'Windows':
         OWI_DOWNLOAD_DIR = "R:/cwi"
         OWI_DIR = "../db"
@@ -46,8 +49,8 @@ class OWIfiles:
     elif platform.system() == 'Linux':
         OWI_DOWNLOAD_DIR = f"{os.path.expanduser('~')}/R/cwi"
         OWI_DIR = f"{os.path.expanduser('~')}/data/MN/OWI"
-        
-    OWI_DOWNLOAD_CWIDATACSV_DIR = f"{OWI_DOWNLOAD_DIR}/cwidata_csv"
+
+    OWI_DOWNLOAD_CWIDATACSV_DIR = f"{OWI_DOWNLOAD_DIR}/{os.path.splitext(CWI_DATA_CSV)[0]}"
     OWI_DOWNLOAD_WELLSSHP_DIR = f"{OWI_DOWNLOAD_DIR}/wellsshp"
     OWI_DOWNLOAD_LOGFILE = f"{OWI_DIR}/OWI_download.log"
     
@@ -130,11 +133,27 @@ class OWI_version_40(OWI_base):
     OWI_SCHEMA_MINOR_VERSION = 0
     OWI_DB_VERSION = "o1.1.0"
     OWI_DB_SCHEMA  = "../sql/owischema_o1.1.0.sql"
-    OWI_MNU_INSERT = ["../sql/insert_c4locs_to_c4ix.sql",
-                      "../sql/mnu1_update_o1.1.0.sql",
-                      "../sql/mnu2_analyze_faults_o1.1.0.sql",
-                      "../sql/mnu3_resolve_faults_o1.1.0.sql"
-                      ]
+    
+    OWI_MNU_INIT_MNU_RELATIONSHIP = "../sql/mnu_MNU_relationship_o1.1.0.sql"
+    OWI_MNU_INSERT_LOCS = "../sql/insert_c4locs_to_c4ix.sql"
+    OWI_MNU_CLEAN_C4ID = "../sql/mnu_clean_c4id_o1.1.0.sql"
+    OWI_MNU_REINIT_O1ID = "../sql/mnu_reinit_o1id_o1.1.0.sql"
+    OWI_MNU_ANALYZE_O1ID = "../sql/mnu_analyze_faults_o1.1.0.sql"
+    OWI_MNU_RESOLVE_O1ID = "../sql/mnu_resolve_faults_o1.1.0.sql"
+    
+    OWI_MNU_INSERT = [OWI_MNU_INIT_MNU_RELATIONSHIP, # 0
+                      OWI_MNU_INSERT_LOCS,           # 1
+                      OWI_MNU_CLEAN_C4ID,            # 2
+                      OWI_MNU_REINIT_O1ID,           # 3
+                      OWI_MNU_ANALYZE_O1ID,          # 4
+                      OWI_MNU_RESOLVE_O1ID,          # 5
+                     ]
+    #
+    # OWI_MNU_INSERT = ["../sql/insert_c4locs_to_c4ix.sql",
+    #                   "../sql/mnu1_update_o1.1.0.sql",
+    #                   "../sql/mnu2_analyze_faults_o1.1.0.sql",
+    #                   "../sql/mnu3_resolve_faults_o1.1.0.sql"
+    #                   ]
     OWI_MNU_VIEWS = ["../sql/mnu_views_o1.1.0.sql"]
     OWI_DOWNLOAD_DB_NAME = f"{OWIfiles().OWI_DOWNLOAD_DIR}/OWI{OWI_SCHEMA_VERSION}{OWI_SCHEMA_MINOR_VERSION}.sqlite"
     # OWI_DB_SCHEMA  = "../sql/cwischema_c4.4.0.sql"

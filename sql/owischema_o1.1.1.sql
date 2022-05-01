@@ -203,8 +203,8 @@ CREATE TABLE c4id (
     IDENTIFIER  TEXT    NOT NULL,
     ID_TYPE     TEXT,
     ID_PROG     TEXT,
-    MNU      INTEGER NOT NULL DEFAULT (0),
-    sMNU     INTEGER NOT NULL DEFAULT (0),
+    MNU         INTEGER NOT NULL DEFAULT (0),
+    sMNU        INTEGER NOT NULL DEFAULT (0),
     CONSTRAINT fk_c4id_wellid
         FOREIGN KEY (wellid)
         REFERENCES c4ix (wellid)
