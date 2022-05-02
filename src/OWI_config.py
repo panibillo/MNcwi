@@ -132,12 +132,13 @@ class OWI_version_40(OWI_base):
     OWI_SCHEMA_VERSION = 4
     OWI_SCHEMA_MINOR_VERSION = 0
     OWI_DB_VERSION = "o1.1.0"
-    OWI_DB_SCHEMA  = "../sql/owischema_o1.1.0.sql"
+    OWI_DB_SCHEMA  = "../sql/owischema_o1.1.2.sql"
     
     OWI_MNU_INIT_MNU_RELATIONSHIP = "../sql/mnu_MNU_relationship_o1.1.0.sql"
     OWI_MNU_INSERT_LOCS = "../sql/insert_c4locs_to_c4ix.sql"
     OWI_MNU_CLEAN_C4ID = "../sql/mnu_clean_c4id_o1.1.0.sql"
     OWI_MNU_REINIT_O1ID = "../sql/mnu_reinit_o1id_o1.1.0.sql"
+    OWI_MNU_VIEWS = ["../sql/mnu_views_o1.1.0.sql"]
     OWI_MNU_ANALYZE_O1ID = "../sql/mnu_analyze_faults_o1.1.0.sql"
     OWI_MNU_RESOLVE_O1ID = "../sql/mnu_resolve_faults_o1.1.0.sql"
     
@@ -145,8 +146,9 @@ class OWI_version_40(OWI_base):
                       OWI_MNU_INSERT_LOCS,           # 1
                       OWI_MNU_CLEAN_C4ID,            # 2
                       OWI_MNU_REINIT_O1ID,           # 3
-                      OWI_MNU_ANALYZE_O1ID,          # 4
-                      OWI_MNU_RESOLVE_O1ID,          # 5
+                      OWI_MNU_VIEWS,                 # 4
+                      OWI_MNU_ANALYZE_O1ID,          # 5
+                      OWI_MNU_RESOLVE_O1ID,          # 6
                      ]
     #
     # OWI_MNU_INSERT = ["../sql/insert_c4locs_to_c4ix.sql",
@@ -154,7 +156,6 @@ class OWI_version_40(OWI_base):
     #                   "../sql/mnu2_analyze_faults_o1.1.0.sql",
     #                   "../sql/mnu3_resolve_faults_o1.1.0.sql"
     #                   ]
-    OWI_MNU_VIEWS = ["../sql/mnu_views_o1.1.0.sql"]
     OWI_DOWNLOAD_DB_NAME = f"{OWIfiles().OWI_DOWNLOAD_DIR}/OWI{OWI_SCHEMA_VERSION}{OWI_SCHEMA_MINOR_VERSION}.sqlite"
     # OWI_DB_SCHEMA  = "../sql/cwischema_c4.4.0.sql"
     # OWI_MNU_INSERT = "../sql/mnu_insert_c4.4.0.sql"

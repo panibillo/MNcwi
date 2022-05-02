@@ -32,13 +32,13 @@ https://www.sqlite.org
 */
 
 -- A veiw of only MNU identifiers
-CREATE VIEW v1idu AS
+CREATE VIEW IF NOT EXISTS v1idu AS
     SELECT * FROM o1id
     WHERE MNU in(1,2,3)
 ;
 
 -- A view of only MNU singleton identifiers
-CREATE VIEW v1ids AS
+CREATE VIEW IF NOT EXISTS v1ids AS
     SELECT * FROM o1id
     WHERE sMNU = 1
 ;
@@ -47,7 +47,7 @@ CREATE VIEW v1ids AS
 -- identifiers.  Lists Well Set identifiers next to each of their
 -- individual well identifiers,
 -- and the ID_TYPEs and ID_PROGs of all identifiers.
-CREATE VIEW v1idsets AS -- mx: multi-well x-references
+CREATE VIEW IF NOT EXISTS v1idsets AS -- mx: multi-well x-references
 SELECT M.wellid AS Mwellid, 
        M.identifier AS Midentifier, 
        M.ID_TYPE AS MID_TYPE, 
@@ -69,7 +69,7 @@ ORDER BY M.identifier, I.wellid
 ;
 
 -- views of tables that expose the sMNU values
-CREATE VIEW vo1ix AS
+CREATE VIEW IF NOT EXISTS vo1ix AS
 SELECT
     A.rowid,
     A.wellid,
@@ -126,7 +126,7 @@ LEFT JOIN v1ids S
   ON A.wellid = S.wellid
 ;
 
-CREATE VIEW vo1ad AS
+CREATE VIEW IF NOT EXISTS vo1ad AS
 SELECT
     A.rowid,
     A.wellid,
@@ -148,7 +148,7 @@ LEFT JOIN v1ids S
   ON A.wellid = S.wellid
 ;
 
-CREATE VIEW vo1an AS
+CREATE VIEW IF NOT EXISTS vo1an AS
 SELECT
     A.rowid,
     A.wellid,
@@ -162,7 +162,7 @@ LEFT JOIN v1ids S
   ON A.wellid = S.wellid
 ;
 
-CREATE VIEW vo1c1 AS
+CREATE VIEW IF NOT EXISTS vo1c1 AS
 SELECT
     A.rowid,
     A.wellid,
@@ -208,7 +208,7 @@ LEFT JOIN v1ids S
   ON A.wellid = S.wellid
 ;
 
-CREATE VIEW vo1c2 AS
+CREATE VIEW IF NOT EXISTS vo1c2 AS
 SELECT
     A.rowid,
     A.wellid,
@@ -227,7 +227,7 @@ LEFT JOIN v1ids S
   ON A.wellid = S.wellid
 ;
 
-CREATE VIEW vo1pl AS
+CREATE VIEW IF NOT EXISTS vo1pl AS
 SELECT
     A.rowid,
     A.wellid,
@@ -243,7 +243,7 @@ LEFT JOIN v1ids S
   ON A.wellid = S.wellid
 ;
 
-CREATE VIEW vo1rm AS
+CREATE VIEW IF NOT EXISTS vo1rm AS
 SELECT
     A.rowid,
     A.wellid,
@@ -255,7 +255,7 @@ LEFT JOIN v1ids S
   ON A.wellid = S.wellid
 ;
 
-CREATE VIEW vo1st AS
+CREATE VIEW IF NOT EXISTS vo1st AS
 SELECT
     A.rowid,
     A.wellid,
@@ -274,7 +274,7 @@ LEFT JOIN v1ids S
   ON A.wellid = S.wellid
 ;
 
-CREATE VIEW vo1wl AS
+CREATE VIEW IF NOT EXISTS vo1wl AS
 SELECT
     A.rowid,
     A.wellid,
@@ -295,7 +295,7 @@ LEFT JOIN v1ids S
   ON A.wellid = S.wellid
 ;
 
-CREATE VIEW vo1locs AS
+CREATE VIEW IF NOT EXISTS vo1locs AS
 SELECT
     A.rowid,
     A.wellid,

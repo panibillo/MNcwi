@@ -243,9 +243,11 @@ class DB_SQLite(DB_context_manager):
             return False
         try:
             self.con.commit()
+            if msg != '':
+                print (f'>> Successful commit: {msg}')
             return True
         except Exception as e:
-            print ('Exception attempting to commit. ' + msg)
+            print ('>> Exception attempting to commit. ' + msg)
             print(e)
             return False
 

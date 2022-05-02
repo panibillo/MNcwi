@@ -137,6 +137,7 @@ INSERT INTO c4ix (
     DEPTH2BDRK, FIRST_BDRK, LAST_STRAT, OHTOPUNIT, OHBOTUNIT, AQUIFER  
     --CUTTINGS, CORE, BHGEOPHYS, GEOCHEM, WATERCHEM, OBWELL, SWL, DH_VIDEO, 
     --INPUT_SRC, UNUSED, ENTRY_DATE, UPDT_DATE
+    , owi_remark
     )
 select  S.wellid, S.unique_no, S.wellid as RELATEID, 
     COUNTY_C, 'well set' as WELLNAME, 
@@ -149,7 +150,8 @@ select  S.wellid, S.unique_no, S.wellid as RELATEID,
     --STRAT_DATE, STRAT_UPD, STRAT_SRC, STRAT_GEOL, STRAT_MC, 
     DEPTH2BDRK, FIRST_BDRK, LAST_STRAT, OHTOPUNIT, OHBOTUNIT, AQUIFER  
     --CUTTINGS, CORE, BHGEOPHYS, GEOCHEM, WATERCHEM, OBWELL, SWL, DH_VIDEO, 
-    --INPUT_SRC, UNUSED, ENTRY_DATE, UPDT_DATE 
+    --INPUT_SRC, UNUSED, ENTRY_DATE, UPDT_DATE
+    , 'Created 8B_number for sealing Set' AS owi_remark
 from (select '8000' || substr(IDENTIFIER,2,6)  as wellid, 
               IDENTIFIER as unique_no, 
               min(wellid) as linkid
