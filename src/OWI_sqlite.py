@@ -48,6 +48,7 @@ Methods
 '''
 import csv
 import os
+import re
 import sqlite3 as sqlite
 from collections import OrderedDict
 
@@ -124,7 +125,82 @@ def qmarks(vals):
         return ','.join(vals * ['?'])
     else:
         return ','.join(len(vals) * ['?'])
+
+def REGEXP(pattern, target_string):
+    """ 
+    Define a Regular Expression function that can be imported to sqlite.
+    
+    Returns True if pattern is matched in target_string, False if not matched.
+    
+    Usage:
+    First instantiate the function in the sqlite connection:
+        con = sqlite.connect(dbname)
+        con.create_function("REGEXP", 2, REGEXP)
+    
+    Search using either of 2 syntax options: (ex. pattern is '^W/d' using '?') 
         
+        syntax1  <string> REGEXP <pattern>
+          ex1  = "SELECT * FROM <table> WHERE <field> REGEXP ?;"    
+
+        syntax2  REGEXP(<pattern>, <string>)
+          ex2  = "SELECT * FROM <table> WHERE REGEXP(?,<field>);"  
+
+        data = cur.execute(query, ('^W/d', 1) ).fetchall()  -- pattern is '^W/d'
+    """    
+    try:
+        return re.search(pattern, target_string, re.IGNORECASE) is not None
+    except Exception as e:
+        print(e)
+        
+def WNUM_FORMAT(Wliteral, county_c, default_val=None):
+    """
+    Convert a W-number into standard 10-character W-number format.
+       <2-digit county number code> + 'W' + <7-digit unique number>
+    
+    Arguments (Any of the arguments may be NULL.) :
+    *   Wliteral : string.  e.g.  'W12345'
+    *   county_co: integer (2-digit MN County Code)
+    *   default_val: <any type> [optional] 
+    
+    Returns:
+    A properly formatted W number if possible; else the default_val.
+        
+    If county_c is suppled and Wliteral contains a county code, then they are
+    compared.  If they do not match then the default_val is returned. 
+    
+    Usage:
+    First instantiate the function in the sqlite connection:
+        con = sqlite.connect(dbname)
+        con.create_function("WNUM_FORMAT", -1, WNUM_FORMAT)
+    
+    Examples:
+        "SELECT WNUM_FORMAT('W12345',19)"               => "19W0012345"
+        "SELECT WNUM_FORMAT('19W12345',19)"             => "19W0012345"
+        "SELECT WNUM_FORMAT('19W0012345',19)"           => "19W0012345"
+        "SELECT WNUM_FORMAT('19W12345',NULL)"           => "19W0012345"
+        "SELECT WNUM_FORMAT('W12345',NULL)"             =>  NULL
+        "SELECT WNUM_FORMAT('19W12345',82)"             =>  NULL
+        "SELECT WNUM_FORMAT('19W12345',82,'19W12345')"  => "19W12345"
+        "SELECT WNUM_FORMAT('H12345',19)"               =>  NULL
+        "SELECT WNUM_FORMAT('H12345',19,NULL)"          =>  NULL
+        "SELECT WNUM_FORMAT('H12345',19,'OOPS')"        => "OOPS"
+    """
+    try:
+        i = Wliteral.upper().find('W') 
+        if i == 0: 
+            if county_c is None:
+                return default_val
+            c,n = county_c, int(Wliteral[i+1:])
+        elif i > 0:
+            c,n = int(Wliteral[:i]), int(Wliteral[i+1:])
+            if county_c is not None:
+                assert c == county_c
+        if i<0:
+            return default_val
+        return f"{c:02d}W{n:07d}"
+    except Exception as e:
+        print (e)
+        return default_val
     
 class DB_context_manager():
     """ 
@@ -166,7 +242,9 @@ class DB_context_manager():
         
     def __exit__(self, exc_type, exc_value, exc_traceback): 
         if self._context_autocommit==True:
-            self.commit_db()
+            OK = self.commit_db()
+            print ('commit=',OK)
+        # TODO: check logic of next statement. Should test be '== True:' ?
         if self._context_connected == False:
             self.close_db()
         self._context_connected = False
@@ -210,7 +288,13 @@ class DB_SQLite(DB_context_manager):
         """
         Open a connection to the db.
         
-        https://pynative.com/python-sqlite-date-and-datetime/
+        Creates functions:
+            REGEXP
+            WNUM_FORMAT
+            
+        Handles date-times using switch "detect_types"
+            https://pynative.com/python-sqlite-date-and-datetime/
+        
         """
         try:
             if self.converttypes:
@@ -219,8 +303,8 @@ class DB_SQLite(DB_context_manager):
                                                        sqlite.PARSE_COLNAMES)
             else:
                 self.con = sqlite.connect(self.db_name)
- 
-            self.con = sqlite.connect(self.db_name)
+            self.con.create_function("REGEXP", 2, REGEXP)
+            self.con.create_function("WNUM_FORMAT", -1, WNUM_FORMAT)
             self.cur = self.con.cursor()
             self.connection_open = True
         except:
@@ -285,7 +369,7 @@ class DB_SQLite(DB_context_manager):
                     print(f">>err1: {str(e1)}\n--------------------")
                     print(f">>err2: {str(e2)}\n====================") 
                     return rv
-        if n==None:
+        if n is None:
             rv = self.cur.fetchall()
         else:
             rv = self.cur.fetchmany(n)
