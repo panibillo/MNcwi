@@ -18,10 +18,10 @@
 
 MNU stands for Minnesota Unique.
 The MNU well identifier model describes the uniqueness characteristics of well identifiers recorded in table \textsf{o1id} of the OWI database.
-That table corresponds to table \textsf{c5id} in the CWI database
+That table corresponds to table \textsf{c5id} in the CWI database.
 The \textsf{o1id} table has the same fields as the \textsf{c5id} table, plus two additional fields for classifying the identifiers: integer field MNU, and integer or boolean field sMNU.
 The MNU number is used to identify which identifiers are considered to be MNU identifiers, and to implement uniqueness constraints on them.
-The sMNU number is used to facilitate identifier reporting.
+The sMNU number selects a single MNU number for each well as the default value to use when a single value must be selected without other guidance.
 The MNU number is also used in building identifier relationships needed for sorting out complicated real-world use cases.
 
 \subsection*{MNU identifiers, Unique Well Numbers, and Well Record Numbers}
@@ -55,7 +55,7 @@ It is not really necessary to alter the definition of the original identifier in
 \emph{Impermanence} of Minnesota Unique Well Numbers is a necessary outcome if altering their definitions is allowed.
 
 Using exclusively the wellid to identify wells is ideal because they are integers and because the CWI database guarantees its validity and its uniqueness.
-This users who most realize this benefit are the owners and maintainers of the CWI database.
+The users who most realize this benefit are the owners and maintainers of the CWI database.
 For other users, including well owners, well drillers, local governments, consultants, and others, the impermanence of the Minnesota Unique Well Numbers that they have recorded in their own records can be a significant burden.
 
 \subsection*{Permanence of MNU identifiers}
@@ -96,7 +96,8 @@ The MNU identifier model gives a very brief set of rules for describing complex 
 The MNU identifier model utilizes the \textsf{o1id} table for storing all MNU identifiers.
 The \textsf{o1id} table is like the \textsf{c5id} table, but adds two integer fields: MNU and sMNU.
 The MNU field is set to a positive integer (the MNU relationship type number) for identifiers that are considered MNU identifiers, and to 0 for other identifiers in the \textsf{o1id} table.
-The sMNU identifier is set to 1 for exactly one identifier per wellid, and to 0 for all others.
+The sMNU identifier is set to 1 for exactly one identifier per wellid, and to 0 for all others.  
+The choice of which identifiers are set to sMNU=1 is fundamentally arbitrary and is subject to change.
 
 The MNU model assigns a relationship type number of MNU=1 to identifiers that are assigned uniquely and permanently to exactly one well.
 These includes the vast majority of existing Minnesota Unique Well Numbers, Minnesota Well and Boring Construction Record Numbers, and Minnesota Well and Boring Sealing Record Numbers.
@@ -134,24 +135,27 @@ Views of the \textsf{o1id} table that simplify data interpretations are construc
 %\subsection*{Water Test identifiers} - placeholder for future section?
 
 
-\subsection*{MNU singular identifiers}
+\subsection*{MNU default identifiers}
 
-The concept of a singular identifier is simply to flag a single MNU identifier for each wellid that can be used in data reporting where the report requires selecting a single identifier for each well.
-The MNU identifier rules try to treat all MNU identifiers as co-equal so that they will all be equally functional for every use; the choice of which identifier to pick should be arbitrary.  
-But it is advantageous if it is both automatic and predictable, so the following arbitrary rule is introduced:
-\emph{The singular identifier for reporting is the lowest valued alpha-numeric MNU identifier, with numbers sorting before letters}.
-With this rule, the singular identifier will normally be the same as the identifier currently selected as the Minnesota Unique Well Number.
+The concept of a default identifier is simply to flag a single MNU identifier for each wellid that can be used in data reporting where the report requires selecting a single identifier for each well.
+The MNU identifier rules try to treat all MNU identifiers as co-equal so that they will all be equally functional for every use; therefore the choice of a default identifier should be fundamentally arbitrary.  
+But it is advantageous if the choice is both automatic and easily predictable, so the following arbitrary rule is introduced:
+\emph{The default identifier is the lowest valued alpha-numeric MNU identifier, with numbers sorting before letters}.
+With this rule, the default identifier will normally be the same as the identifier currently selected as the Minnesota Unique Well Number.
 
-It must be emphasized that \emph{the choice of singular identifiers cannot be guaranteed permanent},
+It must be emphasized that \emph{the choice of default identifiers cannot be guaranteed permanent},
 for the same reason that Minnesota Unique Well Numbers cannot.
 
-A general scheme for querying CWI for data using a list of MNU identifiers would be to report back both the MNU identifiers used in the query and the identifiers currently flagged as singular.
+A general scheme for querying CWI for data using a list of MNU identifiers would be to report back both the MNU identifiers used in the query and the identifiers currently flagged as default.
 
 \subsection*{Integer valued identifiers}
 
 The MNU identifiers are defined as text, and allow both alpha and numeric characters.
 But there are many data manipulation processes that are more difficult when alpha valued identifiers are mixed in with numeric valued identifiers. 
-The two most important are use as a relational identifier within a database, and the common tasks of importing or exporting well data in spreadsheet programs.
+The three most important are 
+1) use as a relational identifier within a database, where integers are preferred,
+2) importing or exporting well data in spreadsheet programs, where default formatting of numbers as text can cause issues,
+and 3) variations in the use of leading zeros when formatting the number part of an identifier as text.
 CWI defines the Unique Well Number to be equivalent to the wellid, which is the relational identifier,
 and it declares the wellid as an integer.
 
@@ -176,6 +180,9 @@ In version 4.1, non-compliant data is modified so that it can be copied into o1i
 The modifications are performed automatically, and are not guaranteed to be correct. 
 The purpose is to generate an experimental data set that prototypes examples of the more complicated MNU identifier relationships. 
 Version 4.1 has to generate wellids for 'sets of wells', those wellids are \textit{not} recognized outside of the OWI database as Minnesota Unique Well Numbers.
+
+In a future version, the number of leading zeros used when storing W-numbers and H-numbers will be standardized in the identifiers table. 
+Search tools will have to coerce search values to match the standardized format, but will not have to search all possible formats.
 
 The final step in implementation would be education.
 Both maintainers and users of well data will need education about how to properly use MNU well identifiers.

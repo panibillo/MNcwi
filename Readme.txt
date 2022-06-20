@@ -5,10 +5,12 @@ Author: 	William Olsen
 License:    MIT   https://opensource.org/licenses/MIT
 
 Summary:
-The purpose of this project is to replicate a functional CWI database using SQLite.
+The purposes of this project are 
+	1) to replicate a functional CWI database using SQLite.
+	2) to demonstrate/experiment with alternative identifier relationship models
 The target audience is persons or programs who have permission to download data from the CWI ftp website maintained by the Minnesota Geologic Survey.
 Major project components include:
-	A database class that interfaces to pysqlite3, implementing a context manager.
+	A database class that interfaces to pysqlite3, implementing a context manager and functions specific to CWI data.
 	A script to automate downloading and unzipping of files from an ftp site.
 	A script to automate importing of the downloaded files into the sqlite database.
 	A public config file defining paths, schema versions, and files.

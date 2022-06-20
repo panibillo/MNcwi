@@ -15,7 +15,7 @@ This version:
     + Makes o1id into the main table for all well identifiers.
         + Add all Unique Well Numbers in c4ix to o1id.
         + Add conditional unique indices on o1id to enforce uniqueness of
-          the primary identifier.
+          the default identifier.
         + Add Views on o1id to simplify using Unique Well Numbers for search
           and for export. (Views are defined in mnu_views_c4.4.0)
         + Data, as cloned from cwi, may not pass all integrity checks.

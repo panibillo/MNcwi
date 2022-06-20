@@ -36,8 +36,8 @@ select     mnu, smnu, id_type, id_prog, mmid, mexplain, mplan, mresolved, mremar
 -- W-series cross refs are assumed errors and not inserted.
 --
 -- 11.a
--- First the singular references as the smaller wellid
--- Ignore required because analysis missed several triples.
+-- First the default identifiers as the smaller wellid
+-- IGNORE is required because analysis missed several triples.
 INSERT OR IGNORE INTO o1id(wellid, RELATEID, IDENTIFIER, ID_TYPE, ID_PROG,
   MNU, sMNU, mmid, mexplain, mremark)
 SELECT o.wellid1, c2.RELATEID, c.IDENTIFIER, c.ID_TYPE, c.ID_PROG,
@@ -53,7 +53,7 @@ WHERE c.mexplain = 'C4ID_KNOWN_XREFS'
 
 -- 11b
 -- Second the cross references: larger wellid
--- Ignore required because analysis missed several triples.
+-- IGNORE is required because analysis missed several triples.
 INSERT OR IGNORE INTO o1id(wellid, RELATEID, IDENTIFIER, ID_TYPE, ID_PROG,
   MNU, sMNU, mmid, mexplain, mremark)
 SELECT o.wellid1, c2.RELATEID, c2.IDENTIFIER, c2.ID_TYPE, c2.ID_PROG,

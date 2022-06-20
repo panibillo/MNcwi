@@ -5,7 +5,7 @@ Date:       2021-02-10
 Author:     William Olsen
 
 These are DDL statements for an SqlLite version of the CWI database.
-These statements create views of the c4 data tables that expose the primary Unique Well Number only, utilizing View v1idp
+These statements create views of the c4 data tables that expose the default Unique Well Number only, utilizing View v1idp
 
 This version:
     - Contains the c4 data tables

@@ -4,6 +4,9 @@
 **.csv
 **.mdb
 **.sqlite
+**.aux
+**.log
+**.gz
 src/OWI_logins.py
 scratch/**
 bak/**

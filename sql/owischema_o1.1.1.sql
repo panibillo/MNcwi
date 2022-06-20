@@ -15,7 +15,7 @@ This version:
         + Add all Unique Well Numbers in c4ix to c4id.
         + Add conditional unique indices on c4id to enforce uniqueness.
         + Add conditional unique index on c4id to enforce uniqueness of
-          the primary MNU identifier.
+          the default MNU identifier.
         + Add conditional unique index on c4id to enforce uniqueness of
           the MNU identifiers.
         + Add Views on c4id to simplify using Unique Well Numbers for search

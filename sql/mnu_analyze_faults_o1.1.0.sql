@@ -64,7 +64,7 @@ c4.4.0 version:
         + Add all Unique Well Numbers in c4ix & c4locs into c4id.
             ID_TYPE = 'c4ix' or 'c4locs'; identifies the source.
             ID_PROG = 'MNUNIQ';
-            sMNU = 1; These will be the primary identifiers by default
+            sMNU = 1; These will be the default identifiers
         + Add conditional unique indices on o1id to enforce uniqueness.
         + Add Views on o1id to simplify using Unique Well Numbers for search
           and for export.
