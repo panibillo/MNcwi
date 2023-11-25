@@ -40,7 +40,7 @@ Python libraries used include:
 * ftplib
 * zipfile
 
-This project is tested on Windows 10
+This project is tested on Windows 10 and Ubuntu 20.04
 
 ### Installing
 
@@ -70,7 +70,9 @@ Prepare for execution:
 
 	Run_new.py
 
-* If re-running the program, be sure to first delete the existing database file, or at least delete the tables in it.  The script does not check. 
+* If re-running the program with *data=True*, you must either:
+    * first delete the existing database file, or
+    * first delete the data in the affected tables.
 
 * You can re-enter the scripts after partial completion, by editing and running either `OWI_import_csv.py` or `OWI_download_ftp.py`.  Depending on where you re-enter, you may not need to be delete the database - but you must know what you are doing to prevent duplicating data. 
 
@@ -87,7 +89,7 @@ William Olsen
     * Initial Release, git tag `schema3`  
       * Schema versions c4.0.0 through c4.3.0 are working. 
       * Schema version c4.4.0 is partially working.  
-      * Schema version c4.4.1 fails because of data constraint violations in the source data.
+      * Schema version c4.4.1 fails because of data constraint violations in the source data (as of October, 2023).
 
 
 ## License
@@ -97,6 +99,6 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 ## Acknowledgments
 
 The CWI database and the MWI website have been developed and maintained by many remarkable people who are remarkably dedicated to preserving and sharing well data in Minnesota.  These are maintained primarily by the Minnesota Geologic Survey and the Minnesota Department of Health, and with the help of numerous others. 
-* MWI map interface  https://mnwellindex.web.health.state.mn.us/
-* MWI text search  https://mnwellindex.web.health.state.mn.us/mwi/
-* CWI documentation  http://mgsweb2.mngs.umn.edu/cwi_doc/cwidoc.htm
+* [MWI map interface](https://mnwellindex.web.health.state.mn.us/)
+* [MWI text search](https://mnwellindex.web.health.state.mn.us/mwi/)
+* [CWI documentation](http://mgsweb2.mngs.umn.edu/cwi_doc/cwidoc.htm)

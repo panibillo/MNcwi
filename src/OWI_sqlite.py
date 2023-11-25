@@ -151,6 +151,36 @@ def REGEXP(pattern, target_string):
         return re.search(pattern, target_string, re.IGNORECASE) is not None
     except Exception as e:
         print(e)
+
+def REGEXP1(pattern, target_string, group=None):
+    """ 
+    Define a Regular Expression function that can be imported to sqlite.
+    
+    Returns True if pattern is matched in target_string, False if not matched.
+    
+    Usage:
+    First instantiate the function in the sqlite connection:
+        con = sqlite.connect(dbname)
+        con.create_function("REGEXP", 2, REGEXP)
+    
+    Search using either of 2 syntax options: (ex. pattern is '^W/d' using '?') 
+        
+        syntax1  <string> REGEXP <pattern>
+          ex1  = "SELECT * FROM <table> WHERE <field> REGEXP ?;"    
+
+        syntax2  REGEXP(<pattern>, <string>)
+          ex2  = "SELECT * FROM <table> WHERE REGEXP(?,<field>);"  
+
+        data = cur.execute(query, ('^W/d', 1) ).fetchall()  -- pattern is '^W/d'
+    """    
+    try:
+        return re.search(pattern, target_string, re.IGNORECASE) is not None
+    except Exception as e:
+        print(e)
+
+W_PATTERN = re.compile(r"^(W)(\d+$)")
+CW_PATTERN = re.compile(r"^(\d\d)([W])(\d+$)") 
+MNU_PATTERN = re.compile(r"^H?(\d+$)")
         
 def WNUM_FORMAT(Wliteral, county_c, default_val=None):
     """
@@ -186,22 +216,174 @@ def WNUM_FORMAT(Wliteral, county_c, default_val=None):
         "SELECT WNUM_FORMAT('H12345',19,'OOPS')"        => "OOPS"
     """
     try:
-        i = Wliteral.upper().find('W') 
-        if i == 0: 
-            if county_c is None:
-                return default_val
-            c,n = county_c, int(Wliteral[i+1:])
-        elif i > 0:
-            c,n = int(Wliteral[:i]), int(Wliteral[i+1:])
-            if county_c is not None:
-                assert c == county_c
-        if i<0:
-            return default_val
-        return f"{c:02d}W{n:07d}"
-    except Exception as e:
-        print (e)
+        s = Wliteral.upper().strip()
+        # First attempt to match Wliteral formatted W#.
+        u = W_PATTERN.findall(s)
+        if u and len(u[0]) == 2:
+            # return f"{Wliteral:10}  matches W_PATTERN=<{u}> "
+            co = f"{int(county_c):02}"
+            if len(co) == 2:
+                return f"{co}W{int(u[0][1]):07}"
+        else:
+            # Second attempt to match Wliteral formatted #W#.
+            v = CW_PATTERN.findall(s)
+            if v and len(v[0]) == 3:  # v = [('19', 'W', '00001234')]
+                #return f"{Wliteral:10}  matches CW_PATTERN=<{v}>"
+                co = int(v[0][0])
+                if 0 < co < 100:
+                    if county_c is not None:
+                        assert int(county_c) == co
+                    return f"{int(v[0][0]):02}W{int(v[0][2]):07}"
+                
         return default_val
+        #return f"{Wliteral:10}  NO match"
+    # try:
+    #     i = Wliteral.upper().find('W') 
+    #     if i == 0: 
+    #         if county_c is None:
+    #             return default_val
+    #         c,n = county_c, int(Wliteral[i+1:])
+    #     elif i > 0:
+    #         c,n = int(Wliteral[:i]), int(Wliteral[i+1:])
+    #         if county_c is not None:
+    #             assert c == county_c
+    #     if i<0:
+    #         return default_val
+    #     return f"{c:02d}W{n:07d}"
+    except Exception as e:
+        #print (e, Wliteral, county_c)
+        return default_val
+
+def RELATEID_FORMAT(Uliteral, default_val=None):
+    """
+    Convert a MNU identifier into a 10 character string RELATEID value.
     
+    Arguments  
+    ---------
+    *   Uliteral : string/NULL.  e.g.  'H12345', '0012345', '19W00123'
+    *   default_val: <any type> [optional] 
+    
+    Returns:
+    --------
+    RELATEID : str or default_val
+    
+    Rules:
+        -   RELATEID should be a 10 character string
+        -   May begin with 'H' followed by 9 digits
+        -   May begin with ## + 'W' + 7 digits. Where ## is a 2-digit county code.
+        -   Leading zeros are added to integers
+    
+    Examples:
+        12345, '12345', '0012345', '0000012345'           =>  '0000012345'
+        'H1234', 'H001234', 'H-1234', 'H#1234', '#H1234'  =>  'H000012345'
+        '82W123', '82W000123', '82W0000123'               =>  '82W0000123'
+        'W123', 'P123', '', NULL/None                     =>  default_val
+    
+    TODO:
+        -   W number formatting should utilize WNUM_FORMAT, rather than being 
+            re-written here.
+        -   This version allows weird formats of input, with '#' and '-'. 
+            There should be a version that catches and does not allow those.
+    """
+    try:
+        val = str(Uliteral).upper().replace('-','').replace(' ','').replace('#','')
+        assert 1 <= len(val) <= 10
+        if (val.startswith('H')):
+            assert len(val) >= 2
+            return f"H{int(val[1:]):09d}"
+        elif (val[2]=='W'):
+            assert len(val) >= 4
+            return f"{val[:2]}W{int(val[3:]):07d}"
+        else:
+            return f"{int(val):010d}"
+    except:
+        return default_val
+    # try:
+    #     rid = WNUM_FORMAT(Uliteral, None, None)
+    #     return rid
+    # except:
+    #     pass
+    # try:
+    #     s = Uliteral.upper().strip()
+    #     u = MNU_PATTERN.findall(s)
+    #     if len(u) == 1:
+    #         v = u[0]
+    #         if not s.endswith(v):
+    #             return default_val
+    #         n = s.find(v)
+    #         if n == 0:
+    #             return str(int(v))
+    #         elif n == 1:
+    #             return f"{Uliteral[0]}{str(int(v))}"
+    #     else:
+    #         v = CW_PATTERN.findall(s)
+    #         if v and len(v[0]) == 3:
+    #             return f"{v[0][0]}W{str(int(v[0][2]))}" 
+    #         else:
+    #             return default_val 
+    #     # else:
+    #     #     print (f"MUN_FORMAT('{Uliteral}') ERROR: '{s}' => {u}")
+    #     #     return default_val
+    # except Exception as e:
+    #     #print (e)
+    #     return default_val        
+    
+def MNU_FORMAT(Uliteral, default_val=None):
+    """
+    Convert a MNU identifier into a standard format: no leading zeros.
+    W-numbers are returned unmodified.
+    
+    Arguments  
+    ---------
+    *   Uliteral : string/NULL.  e.g.  'H00012345', '00001234'
+    *   default_val: <any type> [optional] 
+    
+    Returns:
+    A standardized format MNU if possible; else the default_val.
+        
+    Usage:
+    First instantiate the function in the sqlite connection:
+        con = sqlite.connect(dbname)
+        con.create_function("MNU_FORMAT", -1, MNU_FORMAT)
+    
+    Examples:
+        "SELECT MNU_FORMAT('H12345')"               => "H12345"
+        "SELECT MNU_FORMAT('H0012345')"             => "H12345"
+        "SELECT MNU_FORMAT('0052345')"              => "52345"
+        "SELECT MNU_FORMAT('52345',NULL)"           => "52345"
+        "SELECT MNU_FORMAT('5234x',NULL)"           =>  NULL
+        "SELECT MNU_FORMAT('5234x')"                =>  NULL
+        "SELECT MNU_FORMAT('GARBAGE','Trash')"      => 'Trash'
+        
+    Value of NULL when this is compiled in a SQL engine, is equivalent to 
+    value of None when this is compiled in a Python engine.  The NULL in the 
+    examples is a true SQL NULL type, and not a text "NULL"
+    """
+    try:
+        s = Uliteral.upper().strip()
+        u = MNU_PATTERN.findall(s)
+        if len(u) == 1:
+            v = u[0]
+            if not s.endswith(v):
+                return default_val
+            n = s.find(v)
+            if n == 0:
+                return str(int(v))
+            elif n == 1:
+                return f"{Uliteral[0]}{str(int(v))}"
+        else:
+            v = CW_PATTERN.findall(s)
+            if v and len(v[0]) == 3:
+                return f"{v[0][0]}W{str(int(v[0][2]))}" 
+            else:
+                return default_val 
+        # else:
+        #     print (f"MUN_FORMAT('{Uliteral}') ERROR: '{s}' => {u}")
+        #     return default_val
+    except Exception as e:
+        #print (e)
+        return default_val    
+
 class DB_context_manager():
     """ 
     A mixin class defining a context manager for a database. 
@@ -290,6 +472,7 @@ class DB_SQLite(DB_context_manager):
         
         Creates functions:
             REGEXP
+            MNU_FORMAT
             WNUM_FORMAT
             
         Handles date-times using switch "detect_types"
@@ -303,9 +486,13 @@ class DB_SQLite(DB_context_manager):
                                                        sqlite.PARSE_COLNAMES)
             else:
                 self.con = sqlite.connect(self.db_name)
+            self.con.execute('PRAGMA trusted_schema=OFF') # see https://www.sqlite.org/appfunc.html
             self.con.create_function("REGEXP", 2, REGEXP)
             self.con.create_function("WNUM_FORMAT", -1, WNUM_FORMAT)
+            self.con.create_function("MNU_FORMAT", -1, MNU_FORMAT)
+
             self.cur = self.con.cursor()
+            
             self.connection_open = True
         except:
             print (f"db_sqlite/db_open: ERROR - could not open database: {self.db_name}.")
@@ -512,6 +699,64 @@ class c4db(DB_SQLite):
 #     return 0  
 
 if __name__=='__main__':
+    if 1:
+        DB_NAME = r'/home/bill/R/cwi/OWI40.sqlite'
+        print (DB_NAME)
+        con = sqlite.connect(DB_NAME)
+        print(con.execute(r"SELECT 'H1234' REGEXP('^H?(\d+$)');").fetchall())
+        # con.create_function("REGEXP", 2, REGEXP)
+        # con.create_function("WNUM_FORMAT", -1, WNUM_FORMAT)
+        # con.create_function("MNU_FORMAT", -1, MNU_FORMAT)
+
+    
+    
+    if 0:
+        # W_PATTERN = re.compile(r"(W)(\d+)")
+        # CW_PATTERN = re.compile(r"(\d\d)([W])(\d+)") 
+        # MNU_PATTERN = re.compile(r"^H?(\d+$)")
+
+        for s in ('W001234',
+                  'X001234',
+                  '19W001234',
+                  'H000123',
+                  'H123',
+                  '0000456',
+                  '456',
+                  'W1234',
+                  '19W1234',
+                  'TRASH',
+                  '1234X',
+                  ):
+            print (f"MNU_FORMAT({s:>10}) = [{MNU_FORMAT(s, 'err'):>10}]"
+                   f"  MNU: {str(MNU_PATTERN.findall(s)):18s}"   
+                   f"  W: {str(W_PATTERN.findall(s)):18s}" 
+                   f"  W2: {CW_PATTERN.findall(s)}")
+    
+    if 0:
+        for args, result in (
+            (('W12345',None)           ,  None       ),
+            (('192W12345',None)        ,  None       ),
+            (('3W12345',None)          ,  None       ),
+            (('W12345',19)             , "19W0012345"),
+            (('19W12345',19)           , "19W0012345"),
+            (('19W0012345',19)         , "19W0012345"),
+            (('19W12345',None)         , "19W0012345"),
+            (('19W12345X',None)        ,  None       ),
+            (('19W12345',82)           ,  None       ),
+            (('19W12345',82,'CO ERR')  , "CO ERR"    ),
+            (('H12345',19)             ,  None       ),
+            (('H12345',19,None)        ,  None       ),
+            (('12345',19,'OOPS')       , "OOPS"      )
+            ):
+            # if args[0] == 'W12345':
+            #     print (args)
+            wnum = WNUM_FORMAT(*args)
+            print (f"WNUM_FORMAT{str(args):29} = {str(wnum):10}"
+                   f"  {wnum == result}"
+                   f"     MNU: {str(MNU_PATTERN.findall(args[0])):18s}"   
+                   f"  W: {str(W_PATTERN.findall(args[0])):18s}" 
+                   f"  W2: {CW_PATTERN.findall(args[0])}")
+
     if 0: 
         print ('Test of __str__() and __repr__()')
         COMMIT = False
@@ -537,7 +782,7 @@ if __name__=='__main__':
         print (repr(db))
         print (db)
         db.close_db()
-    if 1:
+    if 0:
         assert isinstance(True, bool)
         assert isinstance(False, bool)
         DB_NAME = ":memory:"
@@ -555,7 +800,7 @@ if __name__=='__main__':
 
         with c4db(db_name=DB_NAME, commit=True, open_db=True) as db:
             print (type(db.con), db.con)
-            print (type(db.cur))
+            #print (type(db.cur))
             print (db.connection_open)
             print (db.get_tablenames())
             # db.con.create_function("trig_enabled", 0, triggers_on)
@@ -565,6 +810,24 @@ if __name__=='__main__':
             # db.con.create_function('triggers_enabled', 0, triggers_off)
             # v = db.queryone("triggers_enabled()")
             # print ('OFF?',v)
+    if 0:
+        data = ('PILLSBURY GRAIN STATION (DNR OB 24004)',
+                'DNR OB 59003-CALVIN BURGGRAAFF',
+                'DNR OB 76036',
+                'WONT MATCH',)
+        pattern1 = 'DNR OB [0-9]{5}'
+        pattern2 = 'DNR OB ([0-9]{5})'
+        for target in data:
+            try:
+                rv1 = re.search(pattern1, target, re.IGNORECASE)
+                rv2 = re.search(pattern2, target, re.IGNORECASE)
+                print (100, rv1)
+                print (101, rv2)
+                print (dir(rv2))
+                print ()
+            except Exception as e:
+                print (e)
+            
         
     print ('\n',r'\\\\\\\\\\\\\\\\\\ DONE //////////////////')        
         

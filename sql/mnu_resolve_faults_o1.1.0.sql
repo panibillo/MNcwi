@@ -163,6 +163,7 @@ left join c4ix x
   
 -- 17c Create well set entries in o1id for the well set IDENTIFIERS
 -- use MNU=3 because the individual wells exist also.
+-- This version creates 8-B wellid and 8-B RELATEID, but not 8-B IDENTIFIER.
 INSERT into o1id(wellid, RELATEID, IDENTIFIER, ID_TYPE, ID_PROG,
   MNU, sMNU, mmid, mexplain, mplan, mremark) 
 SELECT CAST('8000' || substr(IDENTIFIER,2,6) AS INTEGER)  as wellid,  	
@@ -235,4 +236,20 @@ where x.wellid in (
 and i.mnu > 0
 and o.identifier is null
 ;
+
+-- Format all H-numbers in o1id as Hnnnnnn  (H + 6 digits, zero padded)
+UPDATE o1id 
+SET IDENTIFIER = 'H' || substr('00000'||substr(IDENTIFIER,2,9),-6,6)  	
+WHERE IDENTIFIER LIKE ('H%') and MNU=1;
+
+-- Format all W-numbers in o1id in standard format
+--  W-Format = (2-digit county code) + 'W' + (7-digits). E.g. '02W0034567'
+UPDATE o1id 
+SET IDENTIFIER = WNUM_FORMAT(A.identifier, x.county_c)
+FROM o1id A
+LEFT JOIN c4ix x
+  ON A.wellid = x.wellid
+WHERE (A.id_prog in ('WSERIES','WMWSR') 
+       OR (A.id_type='CNTY' AND A.id_prog='ULID'))
+  AND A.identifier REGEXP '\b\d?\d?W[-]?\d{5,8}\b';
 

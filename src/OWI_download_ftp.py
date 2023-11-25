@@ -61,6 +61,8 @@ def download_cwi_from_ftp( ftpaddr,
         # Get the modify dates of the files on the ftp site. Formatted as integer, e.g. 20170521081548
         dict_ftp_file_modify_times = {f[0].lower():int(float(f[1].get('modify'))) for f in ftp.mlsd(path=ftppath)}
     
+        os.makedirs(downloadpath, exist_ok=True)
+        os.makedirs(downloadshppath, exist_ok=True)
         for fname in downloadfiles:
             if 'locs' in fname: 
                 destfile = os.path.join(downloadshppath, fname)
@@ -118,7 +120,7 @@ def download_cwi_from_ftp( ftpaddr,
 
 def RUN_download_cwi():
     import OWI_logins as L
-    from OWI_config import OWI_version_40 as C
+    from OWI_config import OWI_version as C
     
     newfiles = download_cwi_from_ftp(
         ftpaddr = L.OWI_FTP_ADDRESS,

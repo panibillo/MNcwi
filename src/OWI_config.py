@@ -56,6 +56,9 @@ class OWIfiles:
     
 
 #####################################################################
+# OWI Version is defined partly by class CWI_base() and partly by
+# one of the CWI_version_#() classes.
+#####################################################################
 class CWI_base(OWIfiles):
     """ Common configurations for versions using only c4-- tables."""
     OWI_SCHEMA_IDENTIFIER_MODEL = 'CWI'
@@ -160,15 +163,7 @@ class OWI_version_40(OWI_base):
     # OWI_DB_SCHEMA  = "../sql/cwischema_c4.4.0.sql"
     # OWI_MNU_INSERT = "../sql/mnu_insert_c4.4.0.sql"
 
-# class OWI_version_41(OWI_version_40):
-#     """ Iteration 1 of MNU identifier model: Has Unique constraints """
-#     OWI_SCHEMA_VERSION = 4
-#     OWI_SCHEMA_MINOR_VERSION = 1
-#     OWI_DB_VERSION = "o1.1.1"
-#     OWI_MNU_INSERT = ["../sql/insert_c4locs_to_c4ix.sql",
-#                       "../sql/mnu1_update_o1.1.0.sql"]
-#     OWI_MNU_VIEWS = ["../sql/mnu_views_o1.1.1.sql"]
-#     OWI_DOWNLOAD_DB_NAME = f"{OWIfiles().OWI_DOWNLOAD_DIR}/OWI{OWI_SCHEMA_VERSION}{OWI_SCHEMA_MINOR_VERSION}.sqlite"
+
 
 class SWUDS_version_0:
     """ Clone of SWUDS download file, with only addition of id cols & Unique_no. """
@@ -183,6 +178,24 @@ class SWUDS_version_0:
 #     OWI_SWUDS_VERSION = "r1.2.0"
 #     OWI_SWUDS_SCHEMA  = "../sql/swudsschema_r1.2.0.sql"
 #     OWI_SWUDS_TABLEAP = 'r1ap_full'
+
+""" ============= Globally define the OWI version =============== """
+"""  The OWI version will be defined when a module imports class  """
+"""  OWI_version.  The desired version is globally selected here  """
+"""  simply by uncommenting one of the definitions below.         """
+""" ============================================================= """
+# class OWI_version(OWI_version_0):
+# class OWI_version(OWI_version_1):
+# class OWI_version(OWI_version_2):
+# class OWI_version(OWI_version_3):
+class OWI_version(OWI_version_40):
+    """ Define the OWI_version by inherititing the desired class ."""
+    pass
+""" ============================================================= """
+
+class SWUDS_version(SWUDS_version_0):
+    """ Uncomment only one of the SWUDS_version class definitions """
+    pass
 
 if __name__ == '__main__':
     import os

@@ -6,14 +6,12 @@ Created on Oct 10, 2020
 import csv
 import datetime
 import os
-import  shapefile
-from distro import linux_distribution
-from pip._internal.vcs import git
+import shapefile
 
 from OWI_sqlfile import execute_statements_from_file
 from OWI_sqlite import c4db
 
-from OWI_config import  OWI_version_40 as C
+from OWI_config import  OWI_version as C
 from OWI_config import  SWUDS_version_0 as S
 
 """ 
@@ -23,12 +21,21 @@ files will conform to the anticipated data types.  No warnings or error messages
 will be generated.
 """
 def safeint(x):
+    """
+    A simple type check for integer: return x if int else None
+    """
     try:    return int(x)
     except: return None
 def safefloat(x):
+    """
+    A simple type check for float: return x if float else None
+    """
     try:    return float(x)
     except: return None
 def safetext(x):
+    """
+    A simple type check for text: return x if text else None
+    """
     try:   
         rv = x.strip()
         if not rv:
@@ -37,6 +44,9 @@ def safetext(x):
     except: 
         return None
 class safedate():
+    """
+    A simple type check for date type: return x as date if possible, else None
+    """
     def __init__(self, default='%m/%d/%Y'):
         self.fmt = default
         self.fmts = ( default,
@@ -46,6 +56,11 @@ class safedate():
                      '%Y%m%d')
     def date(self, x):
         """
+        Return x as datetime if formatted as one of formats in self.fmts.
+        
+        Arguments:
+        x : str
+        
         Try to convert string x to a date using format self.fmt
         If that fails, try the other formats in self.fmts. If one succeeds,
         store the successful format in self.fmt for use on the next call.
@@ -66,6 +81,12 @@ def get_col_names_and_converters(db, table_name, csv_cols):
     """ 
     Return a list of column names, and a dict of type converter functions.
     
+    Arguments
+    ---------
+    db: open SQLite database with open cursor
+    table_name: str, a table that exists in the db
+    csv_cols: iterable, list of column names
+    
     Only include columns appearing in BOTH the table def and in csv_cols. 
     The csv DictReader method is case sensitive to the column names as entered
     in the csv file, while the sql queries are not case sensitive to the column 
@@ -82,7 +103,7 @@ def get_col_names_and_converters(db, table_name, csv_cols):
             continue
         n = csv_cols[ucsv_cols.index(N)] 
         col_names.append(n)   
-        if   T == 'INTEGER':
+        if   T[:3] == 'INTE':
             dcol_func[n] = safeint
         elif T == 'REAL':
             dcol_func[n] = safefloat
@@ -148,6 +169,9 @@ def shp_locs_generator(shpname):
     whether 'unloc' appears in shpname. 
       
     The order and values of all other columns are preserved
+    
+    The coordinates are not read from the shape, but are assumed entered 
+    correctly in attribute fields.
     """
     if 'unloc' in shpname:
         cwi_loc = 'unloc'
@@ -160,7 +184,6 @@ def shp_locs_generator(shpname):
 
         for srec in shpf:
             yield tuple([cwi_loc] + [srec.record[k] for k in keys])
-
 
 class cwi_csvupdate():
     """ Methods for importing csv files into OWI database tables. """
@@ -284,7 +307,7 @@ class cwi_csvupdate():
             print (f"c4locs table was imported from csv file: {csvname}")
             return True
         return False
-        
+      
     def import_cwi_locs(self, db):
         """
         Import the shapefiles into table c4locs. 
@@ -363,15 +386,24 @@ def RUN_import_csv(data=True,
                    wellids=True,
                    resume_MNU_at = 0):
     """ 
-    Demonstrate full import from csv files. 
+    Demonstrate full import from csv files (and shape files). 
     Creates a new OWI.sqlite.  Does not update an existing OWI.sqlite
 
     Arguments
     ---------
-        data : boolean
-               Data tables are touched only if True
-        locs : boolean
-               locs table is touched only if True
+        data :    boolean, default=True
+                  Data tables are touched only if True
+        
+        locs :    boolean, default=True
+                  locs table is touched only if True
+        
+        wellids:  boolean, default=True
+                  wellids are created if OWI_SCHEMA_HAS_LOCS
+                  unique numbers reformatted if OWI_REFORMAT_UNIQUE_NO
+        
+        resume_MNU_at: int, default=0
+                  Resume processing at step n in OWI_MNU_INSERT
+                  (n should be shown in prior output)
                 
     Prerequisites
     -------------
@@ -392,6 +424,11 @@ def RUN_import_csv(data=True,
         example, reading in csv files twice will just create duplicate records.
     """
     from OWI_sqlite import c4db 
+
+    if resume_MNU_at > 0:
+        assert data == False, 'option data should be False if resum_MUN_at > 0'
+        assert locs == False, 'option locs should be False if resum_MUN_at > 0'
+        assert wellids == False, 'option wellids should be False if resum_MUN_at > 0'
        
     if C.OWI_SCHEMA_HAS_DATA_CONSTRAINTS:
         print('Warning. The CWI data files do not pass UNIQUE constaints')
@@ -442,11 +479,14 @@ def RUN_import_csv(data=True,
                     db.commit_db(msg='Reformatted unique_no in c4locs')
  
         if C.OWI_SCHEMA_IDENTIFIER_MODEL == 'MNU':
-            for sqlfile in C.OWI_MNU_INSERT[resume_MNU_at:]:
-                execute_statements_from_file(db, sqlfile)
-                fname = os.path.basename(sqlfile)
-                db.commit_db(msg=f'MNU model commands: {fname}')
-                # Resumat:
+            for sqlfiles in C.OWI_MNU_INSERT[resume_MNU_at:]:
+                if not isinstance(sqlfiles, (list, tuple)):
+                    sqlfiles = [sqlfiles]
+                for sqlfile in sqlfiles:
+                    execute_statements_from_file(db, sqlfile)
+                    fname = os.path.basename(sqlfile)
+                    db.commit_db(msg=f'MNU model commands: {fname}')
+                # Resumat: (remember to set data, locs, wellids = False)
                 #       0:  mnu_MNU_relationship_o1.1.0.sql
                 #       1:  insert_c4locs_to_c4ix.sql
                 #       2:  mnu_clean_c4id_o1.1.0.sql
@@ -488,6 +528,7 @@ def import_swuds_full(self, db, csvname, table_name='r1ap_full'):
         db.query(u)
     print (f"Completed updating table {table_name}") 
         
+
 def RUN_import_swuds(create=False):
 
     if 1:
@@ -502,12 +543,13 @@ def RUN_import_swuds(create=False):
         if create:
             execute_statements_from_file(db, S.OWI_SWUDS_SCHEMA)
         import_swuds_full(db, csvname)
-        
+
+
 if __name__ == '__main__':
-    RUN_import_csv(data=True, 
-                   locs=True,
-                   wellids = True,
-                   resume_MNU_at=0)
+    # RUN_import_csv(data=False, 
+    #                locs=False,
+    #                wellids = False,
+    #                resume_MNU_at=0)
     #RUN_import_swuds(create=True)
             
     print ('\n',r'\\\\\\\\\\\\\\\ DONE (OWI_import_csv.py) ///////////////')    
